@@ -1,0 +1,19 @@
+# ビルドによって生成されるファイル
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio のユーザー設定
+.vs/
+*.user
+*.suo
+
+# テスト結果
+[Tt]est[Rr]esult*/
+
+# 一時ファイル
+*.tmp
+*.log
+
+# OS が生成するファイル
+.DS_Store
+Thumbs.db
