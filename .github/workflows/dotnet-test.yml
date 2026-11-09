@@ -1,0 +1,41 @@
+
+name: MyTodoApp CI
+
+# ① 実行するタイミング
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+# ② 実行する処理
+jobs:
+  build-and-test:
+
+    # ③ 実行環境
+    runs-on: ubuntu-latest
+
+    steps:
+      # ④ GitHubからソースコードを取得
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ⑤ .NET SDKを準備
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # ⑥ NuGetパッケージを復元
+      - name: Restore dependencies
+        run: dotnet restore MyTodoApp.slnx
+
+      # ⑦ ビルド
+      - name: Build
+        run: dotnet build MyTodoApp.slnx --configuration Release --no-restore
+
+      # ⑧ 単体テスト
+      - name: Test
+        run: dotnet test MyTodoApp.slnx --configuration Release --no-build
