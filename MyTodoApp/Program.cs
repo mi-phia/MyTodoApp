@@ -1,7 +1,10 @@
 ﻿using MyTodoApp;
 
+TodoRepository repository = new TodoRepository();
 TodoManager manager = new TodoManager();
-manager.LoadTodos();
+
+repository.InitializeDatabase();
+manager.LoadTodosFromDatabase(repository);
 
 while (true)
 {
@@ -12,7 +15,6 @@ while (true)
     Console.WriteLine("3. タスクを完了にする");
     Console.WriteLine("4. タスクを削除");
     Console.WriteLine("5. タスクを編集");
-    Console.WriteLine("6. 保存策を確認");
     Console.WriteLine("0. 終了");
     Console.WriteLine("番号を選択してください");
 
@@ -21,7 +23,7 @@ while (true)
     switch (input)
     {
         case "1":
-            AddTodo(manager);
+            AddTodo(manager, repository);
             break;
 
         case "2":
@@ -54,23 +56,18 @@ while (true)
             break;
 
         case "3":
-            CompleteTodo(manager);
+            CompleteTodo(manager, repository);
             break;
 
         case "4":
-            DeleteTodo(manager);
+            DeleteTodo(manager, repository);
             break;
 
         case "5":
-            EditTodo(manager);
-            break;
-
-        case "6":
-            manager.ShowSavePath();
+            EditTodo(manager, repository);
             break;
 
         case "0":
-            manager.SaveTodos();
             Console.WriteLine("アプリを終了します。");
             return;
 
@@ -80,7 +77,7 @@ while (true)
     }
 }
 
-static void AddTodo(TodoManager manager)
+static void AddTodo(TodoManager manager, TodoRepository repository)
 {
     Console.Write("タスク名を入力してください(終了するには空欄)：");
     string? title = Console.ReadLine();
@@ -91,17 +88,18 @@ static void AddTodo(TodoManager manager)
         return;
     }
 
-    manager.AddTodo(title.Trim());
+    manager.AddTodo(title.Trim(), repository);
+
     Console.WriteLine("タスクを追加しました！");
 }
 
-static void CompleteTodo(TodoManager manager)
+static void CompleteTodo(TodoManager manager, TodoRepository repository)
 {
     Console.Write("完了にするタスクの番号を入力してください(省略するには空欄)：");
     string? input = Console.ReadLine();
 
     if (int.TryParse(input, out int number)
-        && manager.CompleteTodo(number))
+        && manager.CompleteTodo(number, repository))
     {
         Console.WriteLine("タスクを完了にしました！");
     }
@@ -111,7 +109,7 @@ static void CompleteTodo(TodoManager manager)
     }
 }
 
-static void DeleteTodo(TodoManager manager)
+static void DeleteTodo(TodoManager manager, TodoRepository repository)
 {
     manager.ShowTodos();
 
@@ -119,7 +117,7 @@ static void DeleteTodo(TodoManager manager)
     string? input = Console.ReadLine();
 
     if (int.TryParse(input, out int number)
-        && manager.DeleteTodo(number))
+        && manager.DeleteTodo(number, repository))
     {
         Console.WriteLine("操作を完了しました！");
     }
@@ -129,7 +127,7 @@ static void DeleteTodo(TodoManager manager)
     }
 }
 
-static void EditTodo(TodoManager manager)
+static void EditTodo(TodoManager manager, TodoRepository repository)
 {
     manager.ShowTodos();
 
@@ -151,7 +149,7 @@ static void EditTodo(TodoManager manager)
         return;
     }
 
-    if (manager.EditTodo(number, newTitle))
+    if (manager.EditTodo(number, newTitle, repository))
     {
         Console.WriteLine("タスクを更新しました！");
     }

@@ -19,7 +19,7 @@ namespace MyTodoApp
                 "MyTodoApp",
                 "todos.json");
 
-        public void AddTodo(string title)
+        public void AddTodo(string title, TodoRepository repository)
         {
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -27,8 +27,11 @@ namespace MyTodoApp
                 return;
             }
 
+            int id = repository.InsertTodo(title);
+
             _todos.Add(new TodoItem
             {
+                Id = id,
                 Title = title,
                 IsCompleted = false
             });
@@ -61,9 +64,16 @@ namespace MyTodoApp
             }
         }
 
-        public bool CompleteTodo(int number)
+        public bool CompleteTodo(int number, TodoRepository repository)
         {
             if (number < 1 || number > _todos.Count)
+            {
+                return false;
+            }
+
+            TodoItem todo = _todos[number - 1];
+
+            if (!repository.UpdateTodoStatus(todo.Id, true))
             {
                 return false;
             }
@@ -72,9 +82,16 @@ namespace MyTodoApp
             return true;
         }
 
-        public bool DeleteTodo(int number)
+        public bool DeleteTodo(int number, TodoRepository repository)
         {
             if (number < 1 || number > _todos.Count)
+            {
+                return false;
+            }
+
+            TodoItem todo = _todos[number - 1];
+
+            if (!repository.DeleteTodo(todo.Id))
             {
                 return false;
             }
@@ -83,7 +100,10 @@ namespace MyTodoApp
             return true;
         }
 
-        public bool EditTodo(int number, string newTitle)
+        public bool EditTodo(
+            int number, 
+            string newTitle,
+            TodoRepository repository)
         {
             if (number < 1 || number > _todos.Count)
             {
@@ -95,70 +115,29 @@ namespace MyTodoApp
                 return false;
             }
 
-            _todos[number - 1].Title = newTitle.Trim();
+            TodoItem todo = _todos[number - 1];
+            string trimmedTitle = newTitle.Trim();
+
+            if (repository.UpdateTodoTitle(todo.Id, trimmedTitle))
+            {
+                return false;
+            }
+
+            todo.Title = trimmedTitle;
             return true;
         }
 
-        public void SaveTodos()
+        public void LoadTodosFromDatabase(
+            TodoRepository repository)
         {
-            try
-            {
-                Directory.CreateDirectory(
-                    Path.GetDirectoryName(FilePath)!);
+            List<TodoItem> loadedTodos =
+                repository.GetAllTodos();
 
-                string json = JsonSerializer.Serialize(_todos);
+            _todos.Clear();
 
-                File.WriteAllText(FilePath, json);
+            _todos.AddRange(loadedTodos);
 
-                Console.WriteLine("タスクを保存しました。");
-            }
-            catch (IOException)
-            {
-                Console.WriteLine("ファイルへの保存に失敗しました。");
-            }
-            catch (UnauthorizedAccessException)
-            {
-                Console.WriteLine("フェイルへのアクセスが許可されていません。");
-            }
-        }
-
-        public void LoadTodos()
-        {
-            if (!File.Exists(FilePath))
-            {
-                Console.WriteLine("保存データがありません。");
-                return;
-            }
-            try
-            {
-
-                string json = File.ReadAllText(FilePath);
-
-                var loadedTodos =
-                    JsonSerializer.Deserialize<List<TodoItem>>(json);
-
-                if (loadedTodos != null)
-                {
-                    _todos.Clear();
-                    _todos.AddRange(loadedTodos);
-                }
-
-                Console.WriteLine("タスクを読み込みました。");
-            }
-            catch (JsonException)
-            {
-                Console.WriteLine("保存データの形式が正しくありません。");
-            }
-            catch (IOException)
-            {
-                Console.WriteLine("ファイルの読み込みに失敗しました。");
-            }
-        }
-
-        public void ShowSavePath()
-        {
-            Console.WriteLine("現在の保存先：");
-            Console.WriteLine(FilePath);
+            Console.WriteLine("SQLiteからタスクを読み込みました");
         }
     }
 }
