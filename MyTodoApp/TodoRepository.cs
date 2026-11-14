@@ -159,7 +159,8 @@ namespace MyTodoApp
 
             command.CommandText = @"
                 SELECT Id, Title, IsCompleted, DueDate, Priority
-                FROM Todos;
+                FROM Todos
+                ORDER BY Id ASC;
             ";
 
             // 1つずつ読み込んでリストに追加
@@ -274,12 +275,19 @@ namespace MyTodoApp
             using var command = connection.CreateCommand();
 
             command.CommandText = @"
-                SELECT Id, Title, IsCompleted, DueDate, Priority
-                FROM Todos
-                WHERE Title LIKE $keyword;
+                 SELECT Id, Title, IsCompleted, DueDate, Priority
+                 FROM Todos
+                 WHERE Title LIKE $keyword ESCAPE '\';
             ";
 
-            command.Parameters.AddWithValue("$keyword", "%" + keyword + "%");
+            string escapedKeyword = keyword
+                .Replace("\\", "\\\\")
+                .Replace("%", "\\%")
+                .Replace("_", "\\_");
+
+            command.Parameters.AddWithValue(
+                "$keyword",
+                "%" + escapedKeyword + "%");
 
             using var reader = command.ExecuteReader();
 
