@@ -4,23 +4,31 @@ namespace MyTodoApp
 {
     public class TodoRepository
     {
-/// 以下、基本設定
-        // データベースの保存位置
-        private readonly string _databasePath =
-            Path.Combine(
-                Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData),
-                "MyTodoApp",
-                "todos.db");
+        /// 以下、基本設定
+        // データベースの保存位置の入れ場所
+        private readonly string _databasePath;
 
         //　builder(設定)の入れ場所
         private string _connectionString = "";
 
-        // コンストラクター(フォルダ作成、)
-        public TodoRepository()
+        // コンストラクター(保存先の設定、フォルダ作成)
+        public TodoRepository(string? databasePath = null)
         {
+            // デフォルトの保存先
+            string defaultPath =            
+                Path.Combine(
+                    Environment.GetFolderPath(
+                        Environment.SpecialFolder.LocalApplicationData),
+                    "MyTodoApp",
+                    "todos.db");
+
+            // 引数があれば、それが保存先になる(単体テストで使用)
+            _databasePath = Path.GetFullPath(
+                databasePath ?? defaultPath);
+          
+            //保存先のフォルダー作成
             Directory.CreateDirectory(
-        Path.GetDirectoryName(_databasePath)!);
+               Path.GetDirectoryName(_databasePath)!);
 
             var builder = new SqliteConnectionStringBuilder
             {
@@ -266,7 +274,7 @@ namespace MyTodoApp
             using var command = connection.CreateCommand();
 
             command.CommandText = @"
-                SELECT Id, Title, IsCompleted
+                SELECT Id, Title, IsCompleted, DueDate, Priority
                 FROM Todos
                 WHERE Title LIKE $keyword;
             ";
@@ -281,7 +289,14 @@ namespace MyTodoApp
                 {
                     Id = reader.GetInt32(0),
                     Title = reader.GetString(1),
-                    IsCompleted = reader.GetBoolean(2)
+                    IsCompleted = reader.GetBoolean(2),
+
+                    // nullかどうかを確認 → 時間を文字列で取得
+                    DueDate = reader.IsDBNull(3)
+                        ? null
+                        : DateTime.Parse(reader.GetString(3)),
+
+                    Priority = (TodoPriority)reader.GetInt32(4)
                 };
 
                 todos.Add(todo);

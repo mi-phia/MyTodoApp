@@ -25,7 +25,7 @@ public static class AppLogger
 
         string logPath = Path.Combine(_logDirectory, fileName);
 
-        string logMessage = $"{DateTime.Now:yyyy--MM--dd HH:mm:ss}[{level}]{message}";
+        string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}[{level}]{message}";
 
         File.AppendAllText(
             logPath,

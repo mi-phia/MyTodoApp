@@ -436,13 +436,11 @@ static void SearchTodos(TodoManager manager, TodoRepository repository)
         case "1":
             try
             {
-                if (repository.UpdateTodoStatus(selectedTodo.Id, true))
+                if (manager.CompleteTodoById(selectedTodo.Id, repository))
                 {
                     AppLogger.Info($"タスクを完了にしました。タスク名：{selectedTodo.Title}");
 
                     Console.WriteLine("タスクを完了にしました。");
-
-                    manager.LoadTodosFromDatabase(repository);
                 }
                 else
                 {
@@ -521,13 +519,11 @@ static void SearchTodos(TodoManager manager, TodoRepository repository)
 
             try
             {
-                if (repository.DeleteTodo(selectedTodo.Id))
+                if (manager.DeleteTodoById(selectedTodo.Id, repository))
                 {
                     AppLogger.Info($"タスクを削除しました。タスク名：{selectedTodo.Title}");
 
                     Console.WriteLine("タスクを削除しました。");
-
-                    manager.LoadTodosFromDatabase(repository);
                 }
                 else
                 {

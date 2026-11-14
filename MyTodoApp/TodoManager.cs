@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.IO;
-using System.Net.NetworkInformation;
 
 namespace MyTodoApp
 {
@@ -100,31 +97,86 @@ namespace MyTodoApp
             return true;
         }
 
-        // 完了
+        // 完了(タスク番号)
         public bool CompleteTodo(int number, TodoRepository repository)
         {
-            TodoItem todo = _todos[number - 1];
+            // Program.cs側にも同じ処理があるが、単体でも動かせるように(テスト用)
+            TodoItem? todo = GetTodoByNumber(number);
+
+            if (todo == null)
+            {
+                return false;
+            }
 
             if (!repository.UpdateTodoStatus(todo.Id, true))
             {
                 return false;
             }
 
-            _todos[number - 1].IsCompleted = true;
+            todo.IsCompleted = true;
+
             return true;
         }
 
-        // 削除
+        // 完了(データベースID)(検索用)
+        public bool CompleteTodoById(int id, TodoRepository repository)
+        {
+            TodoItem? todo = _todos.FirstOrDefault(
+                item => item.Id == id);
+
+            if (todo == null)
+            {
+                return false;
+            }
+
+            if (!repository.UpdateTodoStatus(todo.Id, true))
+            {
+                return false;
+            }
+
+            todo.IsCompleted = true;
+
+            return true;
+        }
+
+        // 削除(タスク番号)
         public bool DeleteTodo(int number, TodoRepository repository)
         {
-            TodoItem todo = _todos[number - 1];
+            TodoItem? todo = GetTodoByNumber(number);
+
+            if (todo == null)
+            {
+                return false;
+            }
 
             if (!repository.DeleteTodo(todo.Id))
             {
                 return false;
             }
 
-            _todos.RemoveAt(number - 1);
+            _todos.Remove(todo);
+
+            return true;
+        }
+
+        // 削除(データベースID)(検索用)
+        public bool DeleteTodoById(int id, TodoRepository repository)
+        {
+            TodoItem? todo = _todos.FirstOrDefault(
+                item => item.Id == id);
+
+            if (todo == null)
+            {
+                return false;
+            }
+
+            if (!repository.DeleteTodo(todo.Id))
+            {
+                return false;
+            }
+
+            _todos.Remove(todo);
+
             return true;
         }
 
@@ -254,17 +306,10 @@ namespace MyTodoApp
             return _todos[number - 1];
         }
 
-        // 空リストチェック
+        // 空リストチェック( > の結果は必ずtrue/falseになる)
         public bool CheckTodosExist()
         {
-            if (_todos.Count == 0)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return _todos.Count > 0;
         }
 
     }
