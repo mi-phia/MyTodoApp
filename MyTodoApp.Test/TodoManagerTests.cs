@@ -72,6 +72,7 @@ namespace MyTodoApp.Test
 
         // 存在しない番号を指定するとnullを返す
         [Theory]
+        [InlineData(-1)]
         [InlineData(0)]
         [InlineData(2)]
         public void GetTodoByNumber_ShouldReturnNull_WhenNumberIsOutOfRange(int number)
@@ -157,6 +158,13 @@ namespace MyTodoApp.Test
             Assert.Equal("買い物", manager.Todos[0].Title);
             Assert.False(manager.Todos[0].IsCompleted);
             Assert.Equal(TodoPriority.Medium, manager.Todos[0].Priority);
+
+            // データベース側にも正しく保存されたことを確認
+            var savedTodo = Assert.Single(repository.GetAllTodos());
+
+            Assert.Equal("買い物", savedTodo.Title);
+            Assert.False(savedTodo.IsCompleted);
+            Assert.Equal(TodoPriority.Medium, savedTodo.Priority);
         }
 
         // 期日と優先度を指定してタスクを追加できる
@@ -183,6 +191,13 @@ namespace MyTodoApp.Test
             Assert.Equal("買い物", todo.Title);
             Assert.Equal(dueDate, todo.DueDate);
             Assert.Equal(TodoPriority.High, todo.Priority);
+
+            // データベース側にも正しく保存されたことを確認
+            var savedTodo = Assert.Single(repository.GetAllTodos());
+
+            Assert.Equal("買い物", savedTodo.Title);
+            Assert.False(savedTodo.IsCompleted);
+            Assert.Equal(TodoPriority.High, savedTodo.Priority);
         }
 
 // 完了
@@ -270,6 +285,7 @@ namespace MyTodoApp.Test
 
         // 範囲外の番号では完了処理に失敗する
         [Theory]
+        [InlineData(-1)]
         [InlineData(0)]
         [InlineData(2)]
         public void CompleteTodo_ShouldReturnFalse_WhenNumberIsOutOfRange(int number)
@@ -291,6 +307,66 @@ namespace MyTodoApp.Test
 
             // タスクが未完了のままであることを確認
             Assert.False(manager.Todos[0].IsCompleted);
+
+            // データベース側も未完了のままであることを確認
+            var savedTodo = Assert.Single(repository.GetAllTodos());
+            Assert.False(savedTodo.IsCompleted);
+        }
+
+        // 完了済みのタスクを再度完了にできない
+        [Fact]
+        public void CompleteTodo_ShouldReturnFalse_WhenTodoIsAlreadyCompleted()
+        {
+            using var db = new TestDatabase();
+            var repository = db.Repository;
+
+            // タスクを登録
+            repository.InsertTodo("買い物");
+
+            var manager = new TodoManager();
+            manager.LoadTodosFromDatabase(repository);
+
+            // 最初の完了処理
+            bool firstResult = manager.CompleteTodo(1, repository);
+            Assert.True(firstResult);
+
+            // 2回目の完了処理
+            bool secondResult = manager.CompleteTodo(1, repository);
+
+            // 2回目は失敗することを確認
+            Assert.False(secondResult);
+
+            // 完了状態が維持されていることを確認
+            Assert.True(manager.Todos[0].IsCompleted);
+            Assert.True(repository.GetAllTodos()[0].IsCompleted);
+        }
+
+        // 完了済みのタスクをID指定で再度完了にできない
+        [Fact]
+        public void CompleteTodoById_ShouldReturnFalse_WhenTodoIsAlreadyCompleted()
+        {
+            using var db = new TestDatabase();
+            var repository = db.Repository;
+
+            // タスクを登録
+            int id = repository.InsertTodo("買い物");
+
+            var manager = new TodoManager();
+            manager.LoadTodosFromDatabase(repository);
+
+            // 最初の完了処理
+            bool firstResult = manager.CompleteTodoById(id, repository);
+            Assert.True(firstResult);
+
+            // 2回目の完了処理
+            bool secondResult = manager.CompleteTodoById(id, repository);
+
+            // 2回目は失敗することを確認
+            Assert.False(secondResult);
+
+            // 完了状態が維持されていることを確認
+            Assert.True(manager.Todos[0].IsCompleted);
+            Assert.True(repository.GetAllTodos()[0].IsCompleted);
         }
 
 // 削除
@@ -376,6 +452,7 @@ namespace MyTodoApp.Test
 
         // 範囲外の番号では削除処理に失敗する
         [Theory]
+        [InlineData(-1)]
         [InlineData(0)]
         [InlineData(2)]
         public void DeleteTodo_ShouldReturnFalse_WhenNumberIsOutOfRange(int number)
@@ -398,6 +475,14 @@ namespace MyTodoApp.Test
             // タスクが存在したままであることを確認
             Assert.Single(manager.Todos);
             Assert.Single(repository.GetAllTodos());
+
+            // TodoManager側に元のタスクが残っていることを確認
+            var remainingTodo = Assert.Single(manager.Todos);
+            Assert.Equal("買い物", remainingTodo.Title);
+
+            // データベース側にも元のタスクが残っていることを確認
+            var savedTodo = Assert.Single(repository.GetAllTodos());
+            Assert.Equal("買い物", savedTodo.Title);
         }
 
 // 編集
@@ -471,6 +556,12 @@ namespace MyTodoApp.Test
             // 元の内容が変わっていないことを確認
             Assert.Equal("元のタイトル", manager.Todos[0].Title);
             Assert.Equal(TodoPriority.Medium, manager.Todos[0].Priority);
+
+            // データベース側も変更されていないことを確認
+            var savedTodo = Assert.Single(repository.GetAllTodos());
+            Assert.Equal("元のタイトル", savedTodo.Title);
+            Assert.Equal(TodoPriority.Medium, savedTodo.Priority);
+            Assert.Null(savedTodo.DueDate);
         }
 
         // 期日を解除できる
