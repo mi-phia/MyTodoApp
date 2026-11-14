@@ -79,8 +79,6 @@ namespace MyTodoApp.Test
             var manager = new TodoManager();
 
             // 1件のタスクを登録
-            manager.Todos.ToList();
-
             using var db = new TestDatabase();
             db.Repository.InsertTodo("テストタスク");
             manager.LoadTodosFromDatabase(db.Repository);
@@ -222,7 +220,12 @@ namespace MyTodoApp.Test
             using var db = new TestDatabase();
             var repository = db.Repository;
 
+            // タスクを登録
+            int id = repository.InsertTodo("買い物");
+
+            // TodoManagerに読み込む
             var manager = new TodoManager();
+            manager.LoadTodosFromDatabase(repository);
 
             // 存在しないIDで完了処理を実行
             bool result = manager.CompleteTodoById(999, repository);
@@ -230,8 +233,14 @@ namespace MyTodoApp.Test
             // 失敗することを確認
             Assert.False(result);
 
-            // タスクが追加されていないことを確認
-            Assert.Empty(manager.Todos);
+            // 既存のタスクが未完了のまま残っていることを確認
+            var todo = Assert.Single(manager.Todos);
+            Assert.Equal("買い物", todo.Title);
+            Assert.False(todo.IsCompleted);
+
+            // データベース側も変更されていないことを確認
+            var savedTodo = Assert.Single(repository.GetAllTodos());
+            Assert.False(savedTodo.IsCompleted);
         }
 
         // 番号を指定してタスクを完了できる
@@ -330,11 +339,19 @@ namespace MyTodoApp.Test
 
             // 失敗することを確認
             Assert.False(result);
+
+            // タスクが残っていることを確認
+            var remainingTodo = Assert.Single(manager.Todos);
+            Assert.Equal("買い物", remainingTodo.Title);
+
+            // データベース側にも残っていることを確認
+            var savedTodo = Assert.Single(repository.GetAllTodos());
+            Assert.Equal("買い物", savedTodo.Title);
         }
 
         // 番号を指定してタスクを削除できる
         [Fact]
-        public void DeleteTodo_ShouldCompleteTodo_WhenNumberIsValid()
+        public void DeleteTodo_ShouldDeleteTodo_WhenNumberIsValid()
         {
             using var db = new TestDatabase();
             var repository = db.Repository;
@@ -492,7 +509,7 @@ namespace MyTodoApp.Test
 // 表記
         // 完了状態と期日に応じた表示文字列を確認
         [Theory]
-        [InlineData(true, "2026-11-15", "完了")]
+        [InlineData(true, "2001-01-01", "完了")]
         [InlineData(false, "2001-01-01", "期限切れ")]
         [InlineData(false, "2099-12-31", "未完了")]
         [InlineData(false, null, "未完了")]
@@ -618,8 +635,11 @@ namespace MyTodoApp.Test
                 TodoPriority.High
             );
 
+            // 追加したタスクのIDを取得
+            int todoId = manager.Todos[0].Id;
+
             // タスクを完了済みにする
-            manager.CompleteTodoById(1, repository);
+            manager.CompleteTodoById(todoId, repository);
 
             // コンソールの出力先を保存
             TextWriter originalOutput = Console.Out;
@@ -694,7 +714,10 @@ namespace MyTodoApp.Test
 
             // 完了済みタスクを追加
             manager.AddTodo("完了済みタスク", repository);
-            manager.CompleteTodoById(2, repository);
+
+            // 完了にする
+            int todoId = manager.Todos[1].Id;
+            manager.CompleteTodoById(todoId, repository);
 
             // 期限切れタスクを追加
             manager.AddTodo(
@@ -802,15 +825,6 @@ namespace MyTodoApp.Test
             Assert.True(firstIndex < secondIndex);
             Assert.True(secondIndex < thirdIndex);
         }
-
-
-
-
-
-
-
-
-
 
         private sealed class TestDatabase : IDisposable
         {
