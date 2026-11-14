@@ -215,6 +215,13 @@ static void CompleteTodo(TodoManager manager, TodoRepository repository)
         return;
     }
 
+    // 完了済みチェック
+    if (selectedTodo.IsCompleted)
+    {
+        Console.WriteLine("すでに完了しています。");
+        return;
+    }
+
     // 実際の完了作業
     try
     {
@@ -434,6 +441,12 @@ static void SearchTodos(TodoManager manager, TodoRepository repository)
     switch (operation)
     {
         case "1":
+            if (selectedTodo.IsCompleted)
+            {
+                Console.WriteLine("すでに完了しています。");
+                return;
+            }
+
             try
             {
                 if (manager.CompleteTodoById(selectedTodo.Id, repository))

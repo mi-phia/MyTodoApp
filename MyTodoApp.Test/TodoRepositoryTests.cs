@@ -4,7 +4,7 @@ using Xunit;
 
 namespace MyTodoApp.Test
 {
-    public class UnitTest1
+    public class TodoRepositoryTests
     {
 // 追加
         // 期日や優先度を設定して追加する
@@ -85,7 +85,7 @@ namespace MyTodoApp.Test
         }
 
         // 存在しないIDを更新できないことを確認する
-            // IDにはintしか入らないので、空白や文字列の入力テストは後述
+        // IDにはintしか入らないので、空白や文字列の入力テストは後述
         [Fact]
         public void UpdateTodoStatus_ShouldReturnFalse_WhenTodoDoesNotExist()
         {
@@ -600,7 +600,7 @@ namespace MyTodoApp.Test
             Assert.Equal(db.DatabasePath, path);
         }
 
-// 接続準備
+        // 接続準備
         private sealed class TestDatabase : IDisposable
         {
             // テスト用データベースの保存先

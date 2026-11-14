@@ -40,10 +40,13 @@ namespace MyTodoApp
             // フィルターによる絞り込み
             var filteredTodos = _todos
                 .Where(todo =>
-                  filter == 0 ||
-                  (filter == 1 && !todo.IsCompleted) ||
-                  (filter == 2 && todo.IsCompleted) ||
-                  (filter == 3 &&
+                    filter == 0 ||
+                    (filter == 1 &&
+                        !todo.IsCompleted &&
+                        (!todo.DueDate.HasValue ||
+                         todo.DueDate.Value.Date >= DateTime.Today)) ||
+                    (filter == 2 && todo.IsCompleted) ||
+                    (filter == 3 &&
                         !todo.IsCompleted &&
                         todo.DueDate.HasValue &&
                         todo.DueDate.Value.Date < DateTime.Today))
@@ -108,6 +111,11 @@ namespace MyTodoApp
                 return false;
             }
 
+            if (todo.IsCompleted)
+            {
+                return false;
+            }
+
             if (!repository.UpdateTodoStatus(todo.Id, true))
             {
                 return false;
@@ -125,6 +133,11 @@ namespace MyTodoApp
                 item => item.Id == id);
 
             if (todo == null)
+            {
+                return false;
+            }
+
+            if (todo.IsCompleted)
             {
                 return false;
             }
@@ -311,6 +324,5 @@ namespace MyTodoApp
         {
             return _todos.Count > 0;
         }
-
     }
 }
