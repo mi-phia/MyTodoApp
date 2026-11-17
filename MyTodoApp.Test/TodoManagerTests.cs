@@ -695,7 +695,7 @@ namespace MyTodoApp.Test
                 Console.SetOut(writer);
 
                 // タスクを表示
-                manager.ShowTodos();
+                ShowTodos(manager);
             }
             finally
             {
@@ -741,7 +741,7 @@ namespace MyTodoApp.Test
             {
                 Console.SetOut(writer);
 
-                manager.ShowTodos();
+                ShowTodos(manager);
             }
             finally
             {
@@ -776,7 +776,7 @@ namespace MyTodoApp.Test
             var manager = new TodoManager();
 
             // タスク一覧を表示
-            bool result = manager.ShowTodos();
+            bool result = ShowTodos(manager);
 
             // タスクが存在しない場合、falseが返ることを確認
             Assert.False(result);
@@ -827,7 +827,7 @@ namespace MyTodoApp.Test
                 Console.SetOut(writer);
 
                 // 指定したフィルターでタスクを表示
-                manager.ShowTodos(filter: filter);
+                ShowTodos(manager, filter: filter);
             }
             finally
             {
@@ -898,7 +898,7 @@ namespace MyTodoApp.Test
                 Console.SetOut(writer);
 
                 // 指定した方法で並び替えて表示
-                manager.ShowTodos(sortOption: sortOption);
+                ShowTodos(manager, sortOption: sortOption);
             }
             finally
             {
@@ -917,6 +917,7 @@ namespace MyTodoApp.Test
             Assert.True(secondIndex < thirdIndex);
         }
 
+// 接続準備
         private sealed class TestDatabase : IDisposable
         {
             // テスト用データベースの保存先
@@ -944,6 +945,36 @@ namespace MyTodoApp.Test
                 {
                 }
             }
+        }
+
+        // 表示
+        private bool ShowTodos(TodoManager manager, int filter = 0, int sortOption = 0)
+        {
+            // 絞り込み・並び替え済みのタスクを取得
+            var filteredTodos = manager.GetFilteredAndSortedTodos(filter, sortOption);
+
+            if (filteredTodos.Count == 0)
+            {
+                return false;
+            }
+
+            // タスクを表示
+            for (int i = 0; i < filteredTodos.Count; i++)
+            {
+                var todo = filteredTodos[i];
+
+                int originalNumber = manager.Todos.ToList().IndexOf(todo) + 1;
+
+                string status = manager.GetIsCompletedText(todo);
+                string dueDateText = manager.GetDueDateText(todo);
+                string priorityText = manager.GetPriorityText(todo);
+
+                Console.WriteLine($"{originalNumber}. [{status}]{todo.Title}");
+                Console.WriteLine($"　期限：{dueDateText}");
+                Console.WriteLine($"　優先度：{priorityText}");
+            }
+
+            return true;
         }
     }
 }

@@ -16,7 +16,7 @@ namespace MyTodoApp
             DateTime? dueDate = null,
             TodoPriority priority = TodoPriority.Medium
             )
-        { 
+        {
             // SQLへの追加(IDが返ってくる)
             int id = repository.InsertTodo(
                 trimmedTitle,
@@ -34,8 +34,10 @@ namespace MyTodoApp
             });
         }
 
-        // 表示
-        public bool ShowTodos(int filter = 0, int sortOption = 0)
+        // 表示(絞り込み、並び替え)
+        public List<TodoItem> GetFilteredAndSortedTodos(
+            int filter = 0,
+            int sortOption = 0)
         {
             // フィルターによる絞り込み
             var filteredTodos = _todos
@@ -75,29 +77,7 @@ namespace MyTodoApp
                     break;
             }
 
-            if (filteredTodos.Count == 0)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < filteredTodos.Count; i++)
-            {
-                var todo = filteredTodos[i];
-
-                int originalNumber = _todos.IndexOf(todo) + 1;
-
-                string status = GetIsCompletedText(todo);
-
-                string dueDateText = GetDueDateText(todo);
-
-                string priorityText = GetPriorityText(todo);
-
-                Console.WriteLine($"{originalNumber}. [{status}]{todo.Title}");
-                Console.WriteLine($"　期限：{dueDateText}");
-                Console.WriteLine($"　優先度：{priorityText}");
-            }
-
-            return true;
+            return filteredTodos;
         }
 
         // 完了(タスク番号)
@@ -201,14 +181,11 @@ namespace MyTodoApp
             TodoPriority priority,
             TodoRepository repository)
         {
-            bool success = repository.UpdateTodoDetails(
+            if (!repository.UpdateTodoDetails(
                 id,
                 newTitle,
                 dueDate,
-                priority
-                );
-
-            if (!success)
+                priority))
             {
                 return false;
             }
@@ -284,7 +261,7 @@ namespace MyTodoApp
         }
 
         // 優先度
-        private string GetPriorityText(TodoItem todo)
+        public string GetPriorityText(TodoItem todo)
         {
             return todo.Priority switch
             {

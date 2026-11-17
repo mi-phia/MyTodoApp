@@ -6,7 +6,7 @@ namespace MyTodoApp.Test
 {
     public class TodoRepositoryTests
     {
-// 追加
+        // 追加
         // 期日や優先度を設定して追加する
         [Fact]
         public void InsertTodo_ShouldSaveAllProperties()
@@ -63,7 +63,28 @@ namespace MyTodoApp.Test
             Assert.Equal(2, secondId);
         }
 
-// 完了
+        // 重複するタイトルは登録できないことを確認する
+        [Fact]
+        public void InsertTodo_ShouldThrowException_WhenTitleAlreadyExists()
+        {
+            using var db = new TestDatabase();
+            var repository = db.Repository;
+
+            // タスクを登録
+            repository.InsertTodo("買い物");
+
+            // 重複するタイトルを登録すると例外が発生する
+            Assert.Throws<SqliteException>(() =>
+                repository.InsertTodo("買い物"));
+
+            // 元のタスクだけが残っていることを確認
+            var todos = repository.GetAllTodos();
+
+            Assert.Single(todos);
+            Assert.Equal("買い物", todos[0].Title);
+        }
+
+        // 完了
         // タスクの完了状態を更新する
         [Fact]
         public void UpdateTodoStatus_ShouldUpdateStatus()
@@ -99,7 +120,7 @@ namespace MyTodoApp.Test
             Assert.False(result);
         }
 
-// 削除
+        // 削除
         // タスクを削除してみる
         [Fact]
         public void DeleteTodo_ShouldDeleteTodo()
@@ -132,7 +153,7 @@ namespace MyTodoApp.Test
             Assert.False(result);
         }
 
-// 編集
+        // 編集
         // タスクの詳細を更新してみる
         [Fact]
         public void UpdateTodoDetails_ShouldUpdateAllProperties()
@@ -195,7 +216,7 @@ namespace MyTodoApp.Test
             Assert.Equal("掃除", todo.Title);
         }
 
-// 検索
+        // 検索
         // キーワードに一致するタスクを検索する
         [Fact]
         public void SearchTodos_ShouldReturnMatchingTodos()
@@ -300,7 +321,7 @@ namespace MyTodoApp.Test
             Assert.Equal(title, todos[0].Title);
         }
 
-// 重複
+        // 重複
         // 登録済みのタイトルが存在することを確認する
         [Fact]
         public void ExistsTodoTitle_ShouldReturnTrue_WhenTitleExists()
@@ -369,7 +390,7 @@ namespace MyTodoApp.Test
             Assert.True(result);
         }
 
-// 表示
+        // 表示
         // タスクがない場合は空のリストを返す
         [Fact]
         public void GetAllTodos_ShouldReturnEmpty_WhenNoTodosExist()
@@ -491,7 +512,7 @@ namespace MyTodoApp.Test
             Assert.Equal(priority, todo.Priority);
         }
 
-// バックアップ
+        // バックアップ
         // バックアップが作成され、データも保存されることを確認する
         [Fact]
         public void BackupDatabase_ShouldCreateBackupWithData()
@@ -532,6 +553,34 @@ namespace MyTodoApp.Test
             }
         }
 
+        // 短時間に複数回バックアップしても別々のファイルが作成される
+        [Fact]
+        public void BackupDatabase_ShouldCreateUniqueFileNames()
+        {
+            using var db = new TestDatabase();
+            var repository = db.Repository;
+
+            string firstBackupPath = repository.BackupDatabase();
+            string secondBackupPath = repository.BackupDatabase();
+
+            try
+            {
+                // ファイル名が異なることを確認
+                Assert.NotEqual(firstBackupPath, secondBackupPath);
+
+                // 両方のファイルが存在することを確認
+                Assert.True(File.Exists(firstBackupPath));
+                Assert.True(File.Exists(secondBackupPath));
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+
+                File.Delete(firstBackupPath);
+                File.Delete(secondBackupPath);
+            }
+        }
+
         // バックアップからデータを復元できることを確認する
         [Fact]
         public void RestoreDatabase_ShouldRestoreBackupData()
@@ -553,8 +602,9 @@ namespace MyTodoApp.Test
                 repository.InitializeDatabase();
                 sourceRepository.InitializeDatabase();
 
-                // 復元前後のデータを登録
+                // 復元前のデータを登録
                 repository.InsertTodo("古いタスク");
+
                 sourceRepository.InsertTodo("新しいタスク");
 
                 // バックアップを作成して復元
@@ -565,6 +615,7 @@ namespace MyTodoApp.Test
                 var todos = repository.GetAllTodos();
 
                 Assert.Single(todos);
+
                 Assert.Equal("新しいタスク", todos[0].Title);
             }
             finally
@@ -583,6 +634,235 @@ namespace MyTodoApp.Test
                 }
                 catch (IOException)
                 {
+                }
+            }
+        }
+
+        // 空のバックアップファイルパスは指定できないことを確認する
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData("\t")]
+        public void RestoreDatabase_ShouldThrowArgumentException_WhenBackupPathIsEmpty(
+            string? backupPath)
+        {
+            using var db = new TestDatabase();
+            var repository = db.Repository;
+
+            // 復元前のタスクを登録
+            repository.InsertTodo("残すべきタスク");
+
+            // 空のパスを指定すると例外が発生する
+            Assert.Throws<ArgumentException>(() =>
+                repository.RestoreDatabase(backupPath!));
+
+            // 元のタスクが残っていることを確認
+            var todos = repository.GetAllTodos();
+
+            Assert.Single(todos);
+            Assert.Equal("残すべきタスク", todos[0].Title);
+        }
+
+        // 存在しないバックアップファイルは復元できないことを確認する
+        [Fact]
+        public void RestoreDatabase_ShouldThrowFileNotFoundException_WhenBackupFileDoesNotExist()
+        {
+            using var db = new TestDatabase();
+            var repository = db.Repository;
+
+            // 復元前のタスクを登録
+            repository.InsertTodo("残すべきタスク");
+
+            // 存在しないファイルのパスを作成
+            string missingBackupPath = Path.Combine(
+                Path.GetTempPath(), $"{Guid.NewGuid()}.db");
+
+            // ファイルが存在しないことを確認
+            Assert.False(File.Exists(missingBackupPath));
+
+            // ファイルが存在しないため例外が発生することを確認
+            Assert.Throws<FileNotFoundException>(() =>
+                repository.RestoreDatabase(missingBackupPath));
+
+            // 元のタスクが残っていることを確認
+            var todos = repository.GetAllTodos();
+
+            Assert.Single(todos);
+            Assert.Equal("残すべきタスク", todos[0].Title);
+        }
+
+        // 必要なテーブルがないバックアップは復元できないことを確認する
+        [Fact]
+        public void RestoreDatabase_ShouldThrowException_WhenTodosTableDoesNotExist()
+        {
+            // テスト用フォルダーを作成
+            string testDirectory = Path.Combine(
+                Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            string databasePath = Path.Combine(testDirectory, "test.db");
+            string invalidBackupPath = Path.Combine(testDirectory, "invalid.db");
+
+            var repository = new TodoRepository(databasePath);
+
+            try
+            {
+                // データベースを初期化してタスクを登録
+                repository.InitializeDatabase();
+                repository.InsertTodo("残すべきタスク");
+
+                // Todosテーブルが存在しないSQLiteデータベースを作成
+                using (var connection = new SqliteConnection(
+                    $"Data Source={invalidBackupPath}"))
+                {
+                    connection.Open();
+                }
+
+                // 不正なバックアップの復元で例外が発生することを確認
+                Assert.Throws<SqliteException>(() =>
+                    repository.RestoreDatabase(invalidBackupPath));
+
+                // 復元前のタスクが残っていることを確認
+                var todos = repository.GetAllTodos();
+
+                Assert.Single(todos);
+                Assert.Equal("残すべきタスク", todos[0].Title);
+            }
+            finally
+            {
+                // SQLiteの接続プールを解放
+                SqliteConnection.ClearAllPools();
+
+                // テスト用フォルダーを削除
+                try
+                {
+                    Directory.Delete(testDirectory, true);
+                }
+                catch (IOException)
+                {
+                }
+            }
+        }
+
+        // 必要な列が不足しているバックアップは復元できないことを確認する
+        [Fact]
+        public void RestoreDatabase_ShouldThrowException_WhenRequiredColumnIsMissing()
+        {
+            string testDirectory = Path.Combine(
+                Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            string databasePath = Path.Combine(testDirectory, "test.db");
+            string invalidBackupPath = Path.Combine(testDirectory, "invalid.db");
+
+            var repository = new TodoRepository(databasePath);
+
+            try
+            {
+                repository.InitializeDatabase();
+                repository.InsertTodo("残すべきタスク");
+
+                // Priority列がないTodosテーブルを作成
+                using (var connection = new SqliteConnection(
+                    $"Data Source={invalidBackupPath}"))
+                {
+                    connection.Open();
+
+                    using var command = connection.CreateCommand();
+
+                    command.CommandText = @"
+                        CREATE TABLE Todos (
+                            Id INTEGER PRIMARY KEY,
+                            Title TEXT,
+                            IsCompleted INTEGER,
+                            DueDate TEXT
+                );
+            ";
+
+                    command.ExecuteNonQuery();
+                }
+
+                // 必要な列がないため例外が発生する
+                Assert.Throws<SqliteException>(() =>
+                    repository.RestoreDatabase(invalidBackupPath));
+
+                // 元のタスクが残っていることを確認
+                var todos = repository.GetAllTodos();
+
+                Assert.Single(todos);
+                Assert.Equal("残すべきタスク", todos[0].Title);
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+
+                try
+                {
+                    Directory.Delete(testDirectory, true);
+                }
+                catch (IOException)
+                {
+                }
+            }
+        }
+
+        // 現在のデータベース自身を復元元に指定できないことを確認する
+        [Fact]
+        public void RestoreDatabase_ShouldThrowException_WhenUsingCurrentDatabase()
+        {
+            using var db = new TestDatabase();
+            var repository = db.Repository;
+
+            // タスクを登録
+            repository.InsertTodo("残すべきタスク");
+
+            // 現在のデータベース自身を復元元に指定
+            Assert.Throws<ArgumentException>(() =>
+                repository.RestoreDatabase(db.DatabasePath));
+
+            // 元のタスクが残っていることを確認
+            var todos = repository.GetAllTodos();
+
+            Assert.Single(todos);
+            Assert.Equal("残すべきタスク", todos[0].Title);
+        }
+
+        // SQLite形式ではないファイルは復元できないことを確認する
+        [Fact]
+        public void RestoreDatabase_ShouldThrowSqliteException_WhenFileIsNotSQLiteDatabase()
+        {
+            using var db = new TestDatabase();
+            var repository = db.Repository;
+
+            // 復元前のタスクを登録
+            repository.InsertTodo("残すべきタスク");
+
+            string invalidBackupPath = Path.Combine(
+                Path.GetTempPath(), $"{Guid.NewGuid()}.db");
+
+            try
+            {
+                // SQLiteではない通常のテキストファイルを作成
+                File.WriteAllText(
+                    invalidBackupPath,
+                    "これはSQLiteデータベースではありません。");
+
+                // SQLiteとして読み込めないため例外が発生する
+                Assert.Throws<SqliteException>(() =>
+                    repository.RestoreDatabase(invalidBackupPath));
+
+                // 元のタスクが残っていることを確認
+                var todos = repository.GetAllTodos();
+
+                Assert.Single(todos);
+                Assert.Equal("残すべきタスク", todos[0].Title);
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+
+                if (File.Exists(invalidBackupPath))
+                {
+                    File.Delete(invalidBackupPath);
                 }
             }
         }

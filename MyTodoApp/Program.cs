@@ -3,10 +3,13 @@ using Microsoft.Data.Sqlite;
 
 /// メインプログラム
 //初期化設定
-TodoRepository repository = new TodoRepository();
-TodoManager manager = new TodoManager();
+TodoRepository repository = new();
+TodoManager manager = new();
 
+// テーブル・インデックスを作成
 repository.InitializeDatabase();
+
+// DBからリストを取得
 manager.LoadTodosFromDatabase(repository);
 
 AppLogger.Info("アプリを起動しました。");
@@ -29,13 +32,14 @@ while (true)
 
     Console.Write("番号を選択してください：");
     string input = Console.ReadLine() ?? "";
+    Console.WriteLine();
 
     switch (input)
     {
         // タスクを追加
         case "1":
             {
-                Console.WriteLine("\n===== タスク追加 =====");
+                Console.WriteLine("===== タスク追加 =====");
 
                 // 諸要素の入力
                 var details = ReadTodoDetails(repository);
@@ -78,7 +82,6 @@ while (true)
         // タスク一覧を表示
         case "2":
             // 絞り込み
-            Console.WriteLine();
             Console.WriteLine("表示方法を選んでください");
             Console.WriteLine("1.すべて表示");
             Console.WriteLine("2.未完了のみ表示");
@@ -87,6 +90,7 @@ while (true)
 
             Console.Write("選択：");
             string filterInput = Console.ReadLine() ?? "";
+            Console.WriteLine();
 
             int filter = -1;
 
@@ -119,7 +123,6 @@ while (true)
             }
 
             // 並び替え
-            Console.WriteLine();
             Console.WriteLine("並び替え方法を選んで下さい");
             Console.WriteLine("1. 通常順");
             Console.WriteLine("2. 期限が近い順");
@@ -128,6 +131,7 @@ while (true)
 
             Console.Write("選択：");
             string sortInput = Console.ReadLine() ?? "";
+            Console.WriteLine();
 
             if (!int.TryParse(sortInput, out int sortOption) ||
                 sortOption < 1 || sortOption > 4)
@@ -136,13 +140,7 @@ while (true)
                 break;
             }
 
-            // 表示
-            Console.WriteLine();
-            if (!manager.ShowTodos(filter, sortOption))
-            {
-                Console.WriteLine("タスクはありません。");
-            }
-
+            ShowTodos(manager, filter, sortOption);
             break;
 
         case "3":
@@ -162,7 +160,6 @@ while (true)
             break;
 
         case "7":
-            Console.WriteLine();
             Console.Write("現在の保存先：");
             Console.WriteLine(repository.ShowSavePath());
             break;
@@ -172,7 +169,7 @@ while (true)
             break;
 
         case "9":
-            RestoreBackup(repository);
+            RestoreBackup(manager, repository);
             break;
 
         case "0":
@@ -189,20 +186,47 @@ while (true)
 
 /// 以下、メソッド一覧
 /// タスク操作(完了、削除、編集、検索)
+// 表示
+static void ShowTodos(TodoManager manager, int filter = 0, int sortOption = 0)
+{
+    // 絞り込み・並び替え済みのタスクを取得(指定がなければ通常通り)
+    var filteredTodos = manager.GetFilteredAndSortedTodos(filter, sortOption);
+    
+    if (filteredTodos.Count == 0)
+    {
+        Console.WriteLine("タスクはありません。");
+        return;
+    }
+
+    // タスクを表示
+    for (int i = 0; i < filteredTodos.Count; i++)
+    {
+        var todo = filteredTodos[i];
+
+        int originalNumber = manager.Todos.ToList().IndexOf(todo) + 1;
+
+        string status = manager.GetIsCompletedText(todo);
+        string dueDateText = manager.GetDueDateText(todo);
+        string priorityText = manager.GetPriorityText(todo);
+
+        Console.WriteLine($"{originalNumber}. [{status}]{todo.Title}");
+        Console.WriteLine($"　期限：{dueDateText}");
+        Console.WriteLine($"　優先度：{priorityText}");
+    }
+}
+
 // 完了
 static void CompleteTodo(TodoManager manager, TodoRepository repository)
 {
+    ShowTodos(manager);
     Console.WriteLine();
-    manager.ShowTodos();
 
     // 空チェック
     if (!manager.CheckTodosExist())
     {
-        Console.WriteLine("タスクがありません。");
         return;
     }
 
-    Console.WriteLine();
     Console.Write("完了にするタスクの番号を入力してください：");
     string input = Console.ReadLine() ?? "";
     Console.WriteLine();
@@ -249,18 +273,17 @@ static void CompleteTodo(TodoManager manager, TodoRepository repository)
 // 削除
 static void DeleteTodo(TodoManager manager, TodoRepository repository)
 {
+    ShowTodos(manager);
     Console.WriteLine();
-    manager.ShowTodos();
 
     if (!manager.CheckTodosExist())
     {
-        Console.WriteLine("タスクがありません。");
         return;
     }
 
-    Console.WriteLine();
     Console.Write("削除するタスクの番号を入力してください：");
     string input = Console.ReadLine() ?? "";
+    Console.WriteLine();
 
     if (!int.TryParse(input, out int number) ||
          manager.GetTodoByNumber(number) is not TodoItem selectedTodo)
@@ -270,7 +293,6 @@ static void DeleteTodo(TodoManager manager, TodoRepository repository)
     }
 
     // 最終確認
-    Console.WriteLine();
     Console.Write("このタスクを本当に削除しますか(y/n):");
     string answer = Console.ReadLine() ?? "";
     Console.WriteLine();
@@ -307,16 +329,14 @@ static void DeleteTodo(TodoManager manager, TodoRepository repository)
 // 編集
 static void EditTodo(TodoManager manager, TodoRepository repository)
 {
+    ShowTodos(manager);
     Console.WriteLine();
-    manager.ShowTodos();
 
     if (!manager.CheckTodosExist())
     {
-        Console.WriteLine("まだタスクはありません。");
         return;
     }
 
-    Console.WriteLine();
     Console.Write("編集するタスクの番号を入力してください：");
     string input = Console.ReadLine() ?? "";
     Console.WriteLine();
@@ -337,7 +357,6 @@ static void EditTodo(TodoManager manager, TodoRepository repository)
         details.DueDate,
         details.Priority))
     {
-        Console.WriteLine();
         Console.WriteLine("編集をキャンセルしました。");
         return;
     }
@@ -375,7 +394,6 @@ static void EditTodo(TodoManager manager, TodoRepository repository)
 // 検索
 static void SearchTodos(TodoManager manager, TodoRepository repository)
 {
-    Console.WriteLine();
     Console.Write("検索キーワードを入力して下さい：");
     string keyword = Console.ReadLine() ?? "";
     Console.WriteLine();
@@ -698,6 +716,7 @@ static bool ConfirmTodo(
 
     Console.Write("選択：");
     string input = Console.ReadLine() ?? "";
+    Console.WriteLine();
 
     return input == "1";
 }
@@ -751,9 +770,8 @@ static void TakeBackup(TodoRepository repository)
 }
 
 // バックアップ復元
-static void RestoreBackup(TodoRepository repository)
+static void RestoreBackup(TodoManager manager, TodoRepository repository)
 {
-    Console.WriteLine();
     Console.Write("復元するバックアップファイルのパスを入力してください：");
     string backupPath = Console.ReadLine() ?? "";
     Console.WriteLine();
@@ -786,6 +804,9 @@ static void RestoreBackup(TodoRepository repository)
     {
         repository.RestoreDatabase(backupPath);
 
+        // 復元後、リストに反映
+        manager.LoadTodosFromDatabase(repository);
+
         AppLogger.Info($"バックアップからデータを復元しました。復元元：{backupPath}");
 
         Console.WriteLine("データの復元が完了しました！");
@@ -813,5 +834,9 @@ static void RestoreBackup(TodoRepository repository)
         AppLogger.Error($"データベースの復元に失敗しました。エラー：{ex.Message}");
 
         Console.WriteLine("ファイルへのアクセスが許可されていません。");
+    }
+    catch (InvalidDataException ex)
+    {
+        Console.WriteLine(ex.Message);
     }
 }

@@ -17,19 +17,32 @@ public static class AppLogger
     {
         WriteLog("ERROR", message);
     }
+
     private static void WriteLog(string level, string message)
     {
-        Directory.CreateDirectory(_logDirectory);
+        try
+        {
+            Directory.CreateDirectory(_logDirectory);
 
-        string fileName = $"app_{DateTime.Now:yyyyMMdd}.log";
+            string fileName = $"app_{DateTime.Now:yyyyMMdd}.log";
 
-        string logPath = Path.Combine(_logDirectory, fileName);
+            string logPath = Path.Combine(_logDirectory, fileName);
 
-        string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}[{level}]{message}";
+            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}[{level}]{message}";
 
-        File.AppendAllText(
-            logPath,
-            logMessage + Environment.NewLine,
-            Encoding.UTF8);
+            File.AppendAllText(
+                logPath,
+                logMessage + Environment.NewLine,
+                Encoding.UTF8);
+        }
+        catch (Exception ex) when (
+            ex is IOException or
+            UnauthorizedAccessException or
+            System.Security.SecurityException)
+        {
+            Console.Error.WriteLine(
+                $"ログの書き込みに失敗しました：{ex.Message}");
+        }
     }
+
 }

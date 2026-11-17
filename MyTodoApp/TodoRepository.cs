@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
+using System.Globalization;
 
 namespace MyTodoApp
 {
@@ -9,7 +10,7 @@ namespace MyTodoApp
         private readonly string _databasePath;
 
         //　builder(設定)の入れ場所
-        private string _connectionString = "";
+        private readonly string _connectionString = "";
 
         // コンストラクター(保存先の設定、フォルダ作成)
         public TodoRepository(string? databasePath = null)
@@ -176,7 +177,11 @@ namespace MyTodoApp
 
                     DueDate = reader.IsDBNull(3)
                     ? null
-                    : DateTime.Parse(reader.GetString(3)),
+                    : DateTime.ParseExact(
+                        reader.GetString(3),
+                        "yyyy-MM-dd",
+                        CultureInfo.InvariantCulture),
+
 
                     Priority =(TodoPriority)reader.GetInt32(4) 
                     };
@@ -190,10 +195,10 @@ namespace MyTodoApp
         // 完了
         public bool UpdateTodoStatus(int id, bool isCompleted)
         {
-            using var connectionn = CreateConnection();
-            connectionn.Open();
+            using var connection = CreateConnection();
+            connection.Open();
 
-            using var command = connectionn.CreateCommand();
+            using var command = connection.CreateCommand();
 
             command.CommandText = @"
                 UPDATE Todos
@@ -302,7 +307,10 @@ namespace MyTodoApp
                     // nullかどうかを確認 → 時間を文字列で取得
                     DueDate = reader.IsDBNull(3)
                         ? null
-                        : DateTime.Parse(reader.GetString(3)),
+                        : DateTime.ParseExact(
+                            reader.GetString(3),
+                            "yyyy-MM-dd",
+                            CultureInfo.InvariantCulture),
 
                     Priority = (TodoPriority)reader.GetInt32(4)
                 };
@@ -323,7 +331,9 @@ namespace MyTodoApp
 
             Directory.CreateDirectory(backupDirectory);
 
-            string fileName = $"todos_{DateTime.Now:yyyyMMdd_HHmmss}.db";
+            // バックアップファイル名に識別子を含めて重複を防止
+            string fileName =
+                $"todos_{DateTime.Now:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}.db";
 
             string backupPath = Path.Combine(
                 backupDirectory, 
@@ -382,10 +392,40 @@ namespace MyTodoApp
                 DataSource = fullBackupPath
             };
 
-            // 現在データのバックアップ
             using var sourceConnection = new SqliteConnection(builder.ToString());
             sourceConnection.Open();
 
+            // バックアップの正常性を確認
+            using var checkCommand = sourceConnection.CreateCommand();
+
+            checkCommand.CommandText = "PRAGMA integrity_check;";
+
+            string checkResult = checkCommand.ExecuteScalar()?.ToString() ?? "";
+
+            if (checkResult != "ok")
+            {
+                throw new InvalidDataException("バックアップファイルが破損しています。");
+            }
+
+            // 必要なテーブルと列が存在するか確認
+            using var schemaCommand = sourceConnection.CreateCommand();
+
+            schemaCommand.CommandText = @"
+                SELECT Id, Title, IsCompleted, DueDate, Priority
+                FROM Todos
+                LIMIT 0;
+            ";
+
+            schemaCommand.ExecuteNonQuery();
+
+            string schemaResult = checkCommand.ExecuteScalar()?.ToString() ?? "";
+
+            if (schemaResult != "ok")
+            {
+                throw new InvalidDataException("テーブルの構造に問題があります。");
+            }
+
+            // 現在のバックアップ作成
             BackupDatabase();
 
             // 参照元の復元
