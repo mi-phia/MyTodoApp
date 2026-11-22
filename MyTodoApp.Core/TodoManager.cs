@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace MyTodoApp
 {
     public class TodoManager
     {
-        private readonly List<TodoItem> _todos = new();
-        public IReadOnlyList<TodoItem> Todos => _todos;
+        private readonly ObservableCollection<TodoItem> _todos = new();
+        public ObservableCollection<TodoItem> Todos => _todos;
 
 /// タスクの操作(追加、表示、完了、削除、編集)
         // 追加
@@ -128,6 +129,35 @@ namespace MyTodoApp
             }
 
             todo.IsCompleted = true;
+
+            return true;
+        }
+
+        // 完了状態を更新(データベースID)(チェックマーク用)
+        public bool UpdateTodoStatusById(
+            int id,
+            bool isCompleted,
+            TodoRepository repository)
+        {
+            // 対象のタスクを探す
+            TodoItem? todo = _todos.FirstOrDefault(
+                item => item.Id == id);
+
+            if (todo == null)
+            {
+                return false;
+            }
+
+            // DBの完了状態を更新
+            if (!repository.UpdateTodoStatus(
+                todo.Id,
+                isCompleted))
+            {
+                return false;
+            }
+
+            // TodoItemの状態も更新
+            todo.IsCompleted = isCompleted;
 
             return true;
         }
@@ -282,7 +312,10 @@ namespace MyTodoApp
 
             _todos.Clear();
 
-            _todos.AddRange(loadedTodos);
+            foreach (TodoItem todo in loadedTodos)
+            {
+                _todos.Add(todo);
+            }
         }
 
         //入力値チェック
