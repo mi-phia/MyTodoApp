@@ -17,3 +17,13 @@
 # OS が生成するファイル
 .DS_Store
 Thumbs.db
+
+# SQLiteデータベース
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# 発行ファイル
+**/publish/
