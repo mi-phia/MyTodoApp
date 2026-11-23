@@ -1,6 +1,6 @@
 <Solution>
   <Project Path="MyTodoApp.Core/MyTodoApp.Core.csproj" Id="7d783a4e-663a-4f64-ad29-275c8304dce1" />
   <Project Path="MyTodoApp.Test/MyTodoApp.Test.csproj" />
-  <Project Path="MyTodoApp.wpf/MyTodoApp.wpf.csproj" DisplayName="MyTodoApp.Wpf" Id="1aabd8c8-0c38-4d7f-b5b3-ab166631fe52" />
+  <Project Path="MyTodoApp.wpf/MyTodoApp.Wpf.csproj" DisplayName="MyTodoApp.Wpf" Id="1aabd8c8-0c38-4d7f-b5b3-ab166631fe52" />
   <Project Path="MyTodoApp/MyTodoApp.csproj" />
 </Solution>
