@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿using MyTodoApp;
+using MyTodoApp.wpf;
+using System.IO;
+using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -8,8 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using MyTodoApp;
-using MyTodoApp.wpf;
+using Microsoft.Win32;
 
 namespace MyTodoApp.Wpf
 {
@@ -23,6 +26,14 @@ namespace MyTodoApp.Wpf
 
         // タスク管理用
         private readonly TodoManager _manager = new();
+
+        // ウィンドウ設定の保存先
+        private readonly string _windowSettingsPath =
+            System.IO.Path.Combine(
+                Environment.GetFolderPath(
+                    Environment.SpecialFolder.LocalApplicationData),
+                "MyTodoApp",
+                "window-settings.json");
 
         // ViewModel用
         private readonly TodoListViewModel _viewModel;
@@ -40,6 +51,9 @@ namespace MyTodoApp.Wpf
 
             // DBに関する初期化処理
             _repository.InitializeDatabase();
+
+            // 前回のウィンドウ設定を読み込む
+            LoadWindowSettings();
 
             // DBからタスクを読み込む
             _manager.LoadTodosFromDatabase(_repository);
@@ -330,6 +344,318 @@ namespace MyTodoApp.Wpf
 
             // タスク名の入力欄にフォーカスを戻す
             TaskInputTextBox.Focus();
+        }
+
+        // バックアップ作成ボタンがクリックされたときの処理
+        private void BackupButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            try
+            {
+                // データベースのバックアップを作成
+                string backupPath = _repository.BackupDatabase();
+
+                // 操作結果を表示
+                TaskStatusTextBlock.Text =
+                    "バックアップを作成しました。";
+
+                // 成功メッセージを表示
+                MessageBox.Show(
+                    $"バックアップを作成しました。\n\n保存先：\n{backupPath}",
+                    "バックアップ完了",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                // 失敗した場合
+                TaskStatusTextBlock.Text =
+                    "バックアップの作成に失敗しました。";
+
+                MessageBox.Show(
+                    $"バックアップの作成に失敗しました。\n\n詳細：\n{ex.Message}",
+                    "バックアップエラー",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        // バックアップ復元ボタンがクリックされたときの処理
+        private void RestoreButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            // バックアップ保存フォルダを取得
+            string databaseDirectory =
+                System.IO.Path.GetDirectoryName(
+                    _repository.ShowSavePath())!;
+
+            string backupDirectory =
+                System.IO.Path.Combine(
+                    databaseDirectory,
+                    "Backups");
+
+            // ファイル選択画面を作成
+            var dialog = new OpenFileDialog
+            {
+                Title = "復元するバックアップを選択",
+
+                // SQLiteファイルを選択
+                Filter =
+                    "バックアップファイル (*.db)|*.db|すべてのファイル (*.*)|*.*",
+
+                // バックアップフォルダを最初に表示
+                InitialDirectory = Directory.Exists(backupDirectory)
+                    ? backupDirectory
+                    : databaseDirectory,
+
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            // ファイル選択画面を表示
+            if (dialog.ShowDialog(this) != true)
+            {
+                return;
+            }
+
+            // 復元前の確認
+            MessageBoxResult result = MessageBox.Show(
+                $"次のバックアップから復元します。\n\n" +
+                $"{dialog.FileName}\n\n" +
+                "現在のタスクは置き換えられます。\n" +
+                "復元を実行してもよろしいですか？",
+
+                "バックアップ復元の確認",
+
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+            // 「いいえ」の場合は終了
+            if (result != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                // データベースを復元
+                _repository.RestoreDatabase(dialog.FileName);
+
+                // タスク一覧を再読み込み
+                _manager.LoadTodosFromDatabase(_repository);
+
+                // 検索・絞り込みを初期状態に戻す
+                _viewModel.SearchText = "";
+                _viewModel.FilterMode = 0;
+
+                // 一覧を更新
+                _viewModel.TodosView.Refresh();
+
+                // 入力フォームをリセット
+                ResetInputForm();
+
+                // 操作結果を表示
+                TaskStatusTextBlock.Text =
+                    "バックアップから復元しました。";
+
+                // 復元成功メッセージ
+                MessageBox.Show(
+                    "バックアップから復元しました。\n\n" +
+                    "タスク一覧を更新しました。",
+                    "復元完了",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                // 復元失敗
+                TaskStatusTextBlock.Text =
+                    "バックアップの復元に失敗しました。";
+
+                MessageBox.Show(
+                    $"バックアップの復元に失敗しました。\n\n" +
+                    $"詳細：\n{ex.Message}",
+                    "復元エラー",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        // ウィンドウを閉じるときの処理
+        private void Window_Closing(
+            object? sender,
+            System.ComponentModel.CancelEventArgs e)
+        {
+            SaveWindowSettings();
+        }
+
+        // ウィンドウ設定を読み込む処理
+        private void LoadWindowSettings()
+        {
+            // 保存ファイルが存在しない場合は何もしない
+            if (!File.Exists(_windowSettingsPath))
+            {
+                return;
+            }
+
+            try
+            {
+                // 保存ファイルを読み込む
+                string json = File.ReadAllText(_windowSettingsPath);
+
+                // JSONをオブジェクトに変換
+                WindowSettings? settings =
+                    JsonSerializer.Deserialize<WindowSettings>(json);
+
+                if (settings == null)
+                {
+                    return;
+                }
+
+                // 画面からはみ出さないようにサイズを調整
+                double maxWidth =
+                    Math.Max(MinWidth, SystemParameters.WorkArea.Width);
+
+                double maxHeight =
+                    Math.Max(MinHeight, SystemParameters.WorkArea.Height);
+
+                // 幅を復元
+                if (double.IsFinite(settings.Width) &&
+                    settings.Width >= MinWidth)
+                {
+                    Width = Math.Clamp(
+                        settings.Width,
+                        MinWidth,
+                        maxWidth);
+                }
+
+                // 高さを復元
+                if (double.IsFinite(settings.Height) &&
+                    settings.Height >= MinHeight)
+                {
+                    Height = Math.Clamp(
+                        settings.Height,
+                        MinHeight,
+                        maxHeight);
+                }
+
+                // ウィンドウの位置を復元
+                if (settings.Left.HasValue &&
+                    settings.Top.HasValue &&
+                    double.IsFinite(settings.Left.Value) &&
+                    double.IsFinite(settings.Top.Value))
+                {
+                    // 現在の仮想デスクトップの範囲を取得
+                    double virtualLeft = SystemParameters.VirtualScreenLeft;
+                    double virtualTop = SystemParameters.VirtualScreenTop;
+
+                    double virtualRight =
+                        virtualLeft + SystemParameters.VirtualScreenWidth;
+
+                    double virtualBottom =
+                        virtualTop + SystemParameters.VirtualScreenHeight;
+
+                    // 画面からはみ出さない位置に調整
+                    double maxLeft = Math.Max(
+                        virtualLeft,
+                        virtualRight - Width);
+
+                    double maxTop = Math.Max(
+                        virtualTop,
+                        virtualBottom - Height);
+
+                    Left = Math.Clamp(
+                        settings.Left.Value,
+                        virtualLeft,
+                        maxLeft);
+
+                    Top = Math.Clamp(
+                        settings.Top.Value,
+                        virtualTop,
+                        maxTop);
+
+                    // 保存した位置を優先する
+                    WindowStartupLocation = WindowStartupLocation.Manual;
+                }
+
+                // 最大化状態を復元
+                if (settings.IsMaximized)
+                {
+                    WindowState = WindowState.Maximized;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"ウィンドウ設定の読み込みに失敗しました: {ex.Message}");
+            }
+        }
+
+        // ウィンドウ設定を保存する処理
+        private void SaveWindowSettings()
+        {
+            try
+            {
+                // 保存先のフォルダを作成
+                Directory.CreateDirectory(
+                    System.IO.Path.GetDirectoryName(_windowSettingsPath)!);
+
+                // 通常サイズのウィンドウ情報を取得
+                Rect bounds = WindowState == WindowState.Normal
+                    ? new Rect(Left, Top, Width, Height)
+                    : RestoreBounds;
+
+                // 保存する設定を作成
+                var settings = new WindowSettings
+                {
+                    Width = bounds.Width > 0 ? bounds.Width : Width,
+                    Height = bounds.Height > 0 ? bounds.Height : Height,
+
+                    // ウィンドウの位置を保存
+                    Left = bounds.Left,
+                    Top = bounds.Top,
+
+                    IsMaximized = WindowState == WindowState.Maximized
+                };
+
+                // JSONに変換
+                string json = JsonSerializer.Serialize(
+                    settings,
+                    new JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    });
+
+                // ファイルに保存
+                File.WriteAllText(_windowSettingsPath, json);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"ウィンドウ設定の保存に失敗しました: {ex.Message}");
+            }
+        }
+
+        // ウィンドウ設定を保存するためのクラス
+        private sealed class WindowSettings
+        {
+            public WindowSettings()
+            {
+            }
+
+            public double Width { get; set; }
+
+            public double Height { get; set; }
+
+            // ウィンドウの表示位置
+            public double? Left { get; set; }
+
+            public double? Top { get; set; }
+
+            public bool IsMaximized { get; set; }
         }
     }
 }

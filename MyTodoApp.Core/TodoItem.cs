@@ -47,8 +47,12 @@ namespace MyTodoApp
             set
             {
                 if (_isCompleted == value) return;
+
                 _isCompleted = value;
                 OnPropertyChanged();
+
+                // 期限切れ状態も更新する
+                OnPropertyChanged(nameof(IsOverdue));
             }
         }
 
@@ -59,8 +63,12 @@ namespace MyTodoApp
             set
             {
                 if (_dueDate == value) return;
+
                 _dueDate = value;
                 OnPropertyChanged();
+
+                // 期限切れ状態も更新する
+                OnPropertyChanged(nameof(IsOverdue));
             }
         }
 
@@ -84,6 +92,13 @@ namespace MyTodoApp
                 this,
                 new PropertyChangedEventArgs(propertyName));
         }
+
+        // 期限切れかどうか
+        public bool IsOverdue =>
+            !IsCompleted &&
+            DueDate.HasValue &&
+            DueDate.Value.Date < DateTime.Today;
+
     }
 
     // 優先度

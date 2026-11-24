@@ -8,12 +8,13 @@
     xmlns:core="clr-namespace:MyTodoApp;assembly=MyTodoApp.Core"
     mc:Ignorable="d"
     Title="My Todo App"
+    FontFamily="BIZ UDゴシック"
     Width="1000"
     Height="750"
     MinWidth="750"
-    MinHeight="600"
-
-    WindowStartupLocation="CenterScreen">
+    MinHeight="680"
+    WindowStartupLocation="CenterScreen"
+    Closing="Window_Closing">
 
     <Window.Resources>
 
@@ -39,45 +40,477 @@
 
         </ControlTemplate>
 
-        <!-- 入力欄のデザイン -->
+        <!-- 入力欄の角丸デザイン -->
         <Style x:Key="InputTextBoxStyle"
-           TargetType="{x:Type TextBox}">
+            TargetType="{x:Type TextBox}">
 
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="5,3"/>
             <Setter Property="BorderBrush" Value="#CBD5E1"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="#FFFFFF"/>
             <Setter Property="Foreground" Value="#0F172A"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="15"/>
             <Setter Property="VerticalContentAlignment"
                 Value="Center"/>
 
+            <!-- 入力欄の形状 -->
+            <Setter Property="Template">
+
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+
+                        <Border
+                            x:Name="TextBoxBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}">
+
+                            <ScrollViewer
+                                x:Name="PART_ContentHost"
+                                Focusable="False"
+                                HorizontalScrollBarVisibility="Hidden"
+                                VerticalScrollBarVisibility="Hidden"/>
+
+                        </Border>
+
+                        <!-- 状態によるデザイン変更 -->
+                        <ControlTemplate.Triggers>
+
+                            <!-- マウスを合わせたとき -->
+                            <Trigger Property="IsMouseOver" Value="True">
+
+                                <Setter
+                                    TargetName="TextBoxBorder"
+                                    Property="BorderBrush"
+                                    Value="#93C5FD"/>
+
+                            </Trigger>
+
+                            <!-- 入力欄を選択したとき -->
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+
+                                <Setter
+                                    TargetName="TextBoxBorder"
+                                    Property="BorderBrush"
+                                    Value="#60A5FA"/>
+
+                            </Trigger>
+
+                            <!-- 無効状態 -->
+                            <Trigger Property="IsEnabled" Value="False">
+
+                                <Setter
+                                    TargetName="TextBoxBorder"
+                                    Property="Opacity"
+                                    Value="0.5"/>
+
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+
+            </Setter>
+
+        </Style>
+        
+        <!-- ComboBoxの選択肢のデザイン -->
+        <Style x:Key="InputComboBoxItemStyle"
+            TargetType="{x:Type ComboBoxItem}">
+
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#334155"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+
+                        <Border
+                            x:Name="ItemBorder"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}">
+
+                            <ContentPresenter
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                RecognizesAccessKey="True"/>
+
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+
+                            <!-- マウスを合わせたとき -->
+                            <Trigger Property="IsHighlighted" Value="True">
+
+                                <Setter
+                                    TargetName="ItemBorder"
+                                    Property="Background"
+                                    Value="#EFF6FF"/>
+
+                                <Setter
+                                    Property="Foreground"
+                                    Value="#1D4ED8"/>
+
+                            </Trigger>
+
+                            <!-- 選択されているとき -->
+                            <Trigger Property="IsSelected" Value="True">
+
+                                <Setter
+                                    TargetName="ItemBorder"
+                                    Property="Background"
+                                    Value="#DBEAFE"/>
+
+                                <Setter
+                                    Property="Foreground"
+                                    Value="#1D4ED8"/>
+
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+            </Setter>
+
         </Style>
 
-        <!-- ComboBoxのデザイン -->
+        <!-- ComboBox本体のデザイン -->
         <Style x:Key="InputComboBoxStyle"
-           TargetType="{x:Type ComboBox}">
+            TargetType="{x:Type ComboBox}">
 
-            <Setter Property="Height" Value="27"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#334155"/>
             <Setter Property="BorderBrush" Value="#CBD5E1"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="#FFFFFF"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="VerticalContentAlignment"
-                Value="Center"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="ItemContainerStyle"
+            Value="{StaticResource InputComboBoxItemStyle}"/>
+
+            <Setter Property="Template">
+
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+
+                        <Grid>
+
+                            <!-- 外枠 -->
+                            <Border
+                                x:Name="ComboBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"/>
+
+                            <!-- 下向き矢印 -->
+                            <ToggleButton
+                                Grid.Column="1"
+                                Focusable="False"
+                                ClickMode="Press"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                IsChecked="{Binding IsDropDownOpen,
+                                    Mode=TwoWay,
+                                RelativeSource={RelativeSource TemplatedParent}}">
+
+                                <ToggleButton.Template>
+
+                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+
+                                        <Border Background="Transparent">
+
+                                            <Path
+                                                Width="9"
+                                                Height="5"
+                                                Stretch="Fill"
+                                                Fill="#64748B"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,10,0"
+                                                Data="M 0,0 L 4.5,5 L 9,0 Z"/>
+
+                                        </Border>
+
+                                    </ControlTemplate>
+
+                                </ToggleButton.Template>
+
+                            </ToggleButton>
+
+                            <!-- 選択された項目の表示 -->
+                            <ContentPresenter
+                                x:Name="ContentSite"
+                                IsHitTestVisible="False"
+                                Content="{TemplateBinding SelectionBoxItem}"
+                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                Margin="10,0,30,0"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Left"/>
+
+                            <!-- 選択肢の一覧 -->
+                            <Popup
+                                x:Name="PART_Popup"
+                                Placement="Bottom"
+                                IsOpen="{TemplateBinding IsDropDownOpen}"
+                                AllowsTransparency="True"
+                                Focusable="False"
+                                PopupAnimation="Fade">
+
+                                <Border
+                                    Margin="0,4,0,0"
+                                    Background="#FFFFFF"
+                                    BorderBrush="#CBD5E1"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    MinWidth="180"
+
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}">
+
+                                    <ScrollViewer
+                                        CanContentScroll="True"
+                                        VerticalScrollBarVisibility="Auto"
+                                        HorizontalScrollBarVisibility="Disabled">
+
+                                        <ItemsPresenter
+                                            KeyboardNavigation.DirectionalNavigation="Contained"/>
+
+                                    </ScrollViewer>
+
+                                </Border>
+
+                            </Popup>
+
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+
+                            <!-- マウスを合わせたとき -->
+                            <Trigger Property="IsMouseOver" Value="True">
+
+                                <Setter
+                                    TargetName="ComboBorder"
+                                    Property="BorderBrush"
+                                    Value="#93C5FD"/>
+
+                            </Trigger>
+
+                            <!-- キーボードでフォーカスしたとき -->
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+
+                                <Setter
+                                    TargetName="ComboBorder"
+                                    Property="BorderBrush"
+                                    Value="#60A5FA"/>
+
+                            </Trigger>
+
+                            <!-- 無効状態 -->
+                            <Trigger Property="IsEnabled" Value="False">
+
+                                <Setter
+                                    TargetName="ComboBorder"
+                                    Property="Opacity"
+                                    Value="0.5"/>
+
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+
+            </Setter>
 
         </Style>
 
-        <!-- DatePickerのデザイン -->
+        <!-- DatePickerの角丸デザイン -->
         <Style x:Key="InputDatePickerStyle"
-           TargetType="{x:Type DatePicker}">
+            TargetType="{x:Type DatePicker}">
 
-            <Setter Property="Height" Value="27"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#334155"/>
             <Setter Property="BorderBrush" Value="#CBD5E1"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="#FFFFFF"/>
             <Setter Property="FontSize" Value="14"/>
+
+            <!-- DatePickerの外観 -->
+            <Setter Property="Template">
+
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="{x:Type DatePicker}">
+
+                        <Grid x:Name="PART_Root">
+
+                            <!-- 外枠 -->
+                            <Border
+                                x:Name="DatePickerBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"/>
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="36"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- 日付入力欄 -->
+                                <DatePickerTextBox
+                                    x:Name="PART_TextBox"
+                                    Grid.Column="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="6,2"
+                                    Foreground="{TemplateBinding Foreground}"
+                                    FontSize="{TemplateBinding FontSize}"
+                                    VerticalContentAlignment="Center"/>
+
+                                <!-- カレンダーボタン -->
+                                <Button
+                                    x:Name="PART_Button"
+                                    Grid.Column="1"
+                                    Focusable="False"
+                                    Background="Transparent"
+                                    BorderThickness="0">
+
+                                    <Button.Template>
+
+                                        <ControlTemplate TargetType="{x:Type Button}">
+
+                                            <Border
+                                                x:Name="CalendarButtonBorder"
+                                                Background="{TemplateBinding Background}"
+                                                CornerRadius="0,5,5,0">
+
+                                                <!-- カレンダーアイコン -->
+                                                <Path
+                                                    x:Name="CalendarIcon"
+                                                    Width="16"
+                                                    Height="16"
+                                                    Stroke="#64748B"
+                                                    StrokeThickness="1.4"
+                                                    StrokeStartLineCap="Round"
+                                                    StrokeEndLineCap="Round"
+                                                    Stretch="Uniform"
+                                                    Data="M 3,2 L 13,2 L 13,14 L 3,14 Z M 6,0 L 6,4 M 10,0 L 10,4 M 3,5 L 13,5"/>
+
+                                            </Border>
+
+                                            <ControlTemplate.Triggers>
+
+                                                <!-- マウスオーバー時 -->
+                                                <Trigger
+                                                    Property="IsMouseOver"
+                                                    Value="True">
+
+                                                    <Setter
+                                                        TargetName="CalendarButtonBorder"
+                                                        Property="Background"
+                                                        Value="#EFF6FF"/>
+
+                                                    <!-- アイコンを青色に変更 -->
+                                                    <Setter
+                                                        TargetName="CalendarIcon"
+                                                        Property="Stroke"
+                                                        Value="#2563EB"/>
+
+                                                </Trigger>
+
+                                                <!-- クリック時 -->
+                                                <Trigger
+                                                    Property="IsPressed"
+                                                    Value="True">
+
+                                                    <Setter
+                                                        TargetName="CalendarButtonBorder"
+                                                        Property="Background"
+                                                        Value="#DBEAFE"/>
+
+                                                    <!-- アイコンを濃い青色に変更 -->
+                                                    <Setter
+                                                        TargetName="CalendarIcon"
+                                                        Property="Stroke"
+                                                        Value="#1D4ED8"/>
+
+                                                </Trigger>
+
+                                            </ControlTemplate.Triggers>
+
+                                        </ControlTemplate>
+
+                                    </Button.Template>
+
+                                </Button>
+
+                            </Grid>
+
+                            <!-- カレンダー表示領域 -->
+                            <Popup
+                                x:Name="PART_Popup"
+                                Placement="Bottom"
+                                PlacementTarget="{Binding ElementName=PART_TextBox}"
+                                StaysOpen="False"
+                                AllowsTransparency="True"/>
+
+                        </Grid>
+
+                        <!-- 状態による枠線の変更 -->
+                        <ControlTemplate.Triggers>
+
+                            <Trigger Property="IsMouseOver" Value="True">
+
+                                <Setter
+                                    TargetName="DatePickerBorder"
+                                    Property="BorderBrush"
+                                    Value="#93C5FD"/>
+
+                            </Trigger>
+
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+
+                                <Setter
+                                    TargetName="DatePickerBorder"
+                                    Property="BorderBrush"
+                                    Value="#60A5FA"/>
+
+                            </Trigger>
+
+                            <Trigger Property="IsEnabled" Value="False">
+
+                                <Setter
+                                    TargetName="DatePickerBorder"
+                                    Property="Opacity"
+                                    Value="0.5"/>
+
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+
+            </Setter>
 
         </Style>
 
@@ -103,7 +536,7 @@
 
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background"
-                        Value="#1D4ED8"/>
+                        Value="#79b9ff"/>
                 </Trigger>
 
                 <Trigger Property="IsPressed" Value="True">
@@ -363,6 +796,7 @@
                         <ComboBox
                             Width="180"
                             HorizontalAlignment="Left"
+                            Style="{StaticResource InputComboBoxStyle}"
                             SelectedIndex="{Binding FilterMode, Mode=TwoWay}">
 
                             <ComboBoxItem Content="すべて"/>
@@ -384,6 +818,7 @@
                         <ComboBox
                             Width="180"
                             HorizontalAlignment="Left"
+                            Style="{StaticResource InputComboBoxStyle}"
                             SelectedIndex="{Binding SortMode, Mode=TwoWay}">
 
                             <ComboBoxItem Content="登録順"/>
@@ -395,28 +830,85 @@
                     </StackPanel>
 
                 </Grid>
-
+            </StackPanel>
                 <!-- タスク一覧 -->
             <Grid Grid.Row="1">
 
-                <ListBox      
-                    x:Name="TaskListBox"
-                    ItemsSource="{Binding TodosView}"
-                    MinHeight="220"
-                    VerticalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
-                    ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <!-- タスク一覧の外枠 -->
+                <Border
+                    BorderBrush="#CBD5E1"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Background="#FFFFFF"
+                    ClipToBounds="True">
+
+                    <ListBox
+                        x:Name="TaskListBox"
+                        ItemsSource="{Binding TodosView}"
+                        MinHeight="220"
+                        VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        ScrollViewer.CanContentScroll="False">
+
+                    <!-- スクロール領域の設定 -->
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel
+                                Margin="0,0,0,180"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
 
                     <ListBox.ItemTemplate>
 
                         <DataTemplate>
 
-                            <!-- 1件のタスクを囲むBorder -->
                             <Border
-                                BorderBrush="#E2E8F0"
                                 BorderThickness="0,0,0,1"
                                 Padding="8,6"
-                                MinHeight="44">
+                                MinHeight="44"
+                                Margin="0,2"
+                                CornerRadius="6">
+
+                                <!-- マウスオーバー時のデザイン -->
+                                <Border.Style>
+                                    <Style TargetType="{x:Type Border}">
+
+                                        <!-- 通常時 -->
+                                        <Setter
+                                            Property="Background"
+                                            Value="Transparent"/>
+
+                                        <Setter
+                                            Property="BorderBrush"
+                                            Value="#E2E8F0"/>
+
+                                        <Style.Triggers>
+
+                                            <!-- マウスを合わせたとき -->
+                                            <DataTrigger
+                                                Binding="{Binding IsMouseOver,
+                                                RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}"
+                                                Value="True">
+
+                                                <!-- 背景色 -->
+                                                <Setter
+                                                    Property="Background"
+                                                    Value="#EFF6FF"/>
+
+                                                <!-- 枠線 -->
+                                                <Setter
+                                                    Property="BorderBrush"
+                                                    Value="#BFDBFE"/>
+
+                                            </DataTrigger>
+
+                                        </Style.Triggers>
+
+                                    </Style>
+                                </Border.Style>
 
                                 <Grid VerticalAlignment="Center">
 
@@ -474,7 +966,40 @@
                                     <TextBlock
                                         Grid.Column="1"
                                         Text="{Binding DueDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=未設定}"
-                                        VerticalAlignment="Center"/>
+                                        VerticalAlignment="Center">
+
+                                        <!-- 期限切れによる文字色の変更 -->
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+
+                                                <!-- 通常時の文字色 -->
+                                                <Setter
+                                                    Property="Foreground"
+                                                    Value="#334155"/>
+
+                                                <Style.Triggers>
+
+                                                    <!-- 期限切れの場合 -->
+                                                    <DataTrigger
+                                                        Binding="{Binding IsOverdue}"
+                                                        Value="True">
+
+                                                        <Setter
+                                                            Property="Foreground"
+                                                            Value="#DC2626"/>
+
+                                                        <Setter
+                                                            Property="FontWeight"
+                                                            Value="Bold"/>
+
+                                                    </DataTrigger>
+
+                                                </Style.Triggers>
+
+                                            </Style>
+                                        </TextBlock.Style>
+
+                                    </TextBlock>
 
                                     <!-- 優先度 -->
                                     <Border
@@ -581,16 +1106,19 @@
                                         Content="削除"
                                         Style="{StaticResource DangerButtonStyle}"
                                         Click="DeleteButton_Click"
-                                        Margin="2,0"/>
-
+                                        Margin="2,0"/>                                   
+                                
                                 </Grid>
+                            
                             </Border>
-
+                     
                         </DataTemplate>
+                    
                     </ListBox.ItemTemplate>
 
-
-                </ListBox>
+                    </ListBox>
+                    
+                </Border>
 
                 <!-- タスクが0件の場合のメッセージ -->
                 <TextBlock
@@ -646,12 +1174,42 @@
 
                 </StackPanel>
 
-                    <!-- タスクの操作結果 -->
-                    <TextBlock
+                <!-- タスクの操作結果 -->
+                <TextBlock
                         x:Name="TaskStatusTextBlock"
                         Text="タスクの状態がここに表示されます"
                         Foreground="Gray"
                         Margin="0,5,0,0"/>
+
+                <!-- データ管理 -->
+                <TextBlock
+                    Text="データ管理"
+                    FontWeight="Bold"
+                    Margin="0,15,0,5"/>
+
+                <!-- バックアップ関連ボタン -->
+                <StackPanel
+                    Orientation="Horizontal"
+                    Margin="0,5,0,0">
+
+                    <!-- バックアップ作成 -->
+                    <Button
+                        x:Name="BackupButton"
+                        Content="バックアップ作成"
+                        Width="140"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        HorizontalAlignment="Left"
+                        Click="BackupButton_Click"/>
+
+                    <!-- バックアップ復元 -->
+                    <Button
+                        x:Name="RestoreButton"
+                        Content="バックアップ復元"
+                        Width="160"
+                        Height="36"
+                        Style="{StaticResource DangerButtonStyle}"
+                        Margin="8,0,0,0"
+                        Click="RestoreButton_Click"/>
 
                 </StackPanel>
                 
