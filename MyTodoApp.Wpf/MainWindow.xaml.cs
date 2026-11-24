@@ -137,17 +137,8 @@ namespace MyTodoApp.Wpf
                     priority);
             }
 
-            // 編集モードの解除
-            _editingTodo = null;
-            AddButton.Content = "追加";
-
-            // 入力欄をリセット
-            TaskInputTextBox.Clear();
-            DueDatePicker.SelectedDate = null;
-            PriorityComboBox.SelectedIndex = 1;
-
-            // 入力欄にフォーカスを戻す
-            TaskInputTextBox.Focus();
+            // 入力フォームをリセット（優先度は「中」に戻す）
+            ResetInputForm();
         }
 
         // チェックボックスがクリックされた時の処理
@@ -304,6 +295,41 @@ namespace MyTodoApp.Wpf
                 TaskStatusTextBlock.Text =
                     "削除をキャンセルしました。";
             }            
+        }
+
+        // 入力リセットボタンがクリックされたときの処理
+        private void ResetButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            // 入力フォームをリセット
+            ResetInputForm();
+
+            // 操作結果を表示
+            TaskStatusTextBlock.Text =
+                "入力内容をリセットしました。";
+        }
+
+        // 入力フォームをリセットする処理
+        private void ResetInputForm()
+        {
+            // 編集モードを解除
+            _editingTodo = null;
+
+            // タスク名を空欄にする
+            TaskInputTextBox.Clear();
+
+            // 期限を未設定にする
+            DueDatePicker.SelectedDate = null;
+
+            // 優先度を「中」に戻す
+            PriorityComboBox.SelectedIndex = 1;
+
+            // ボタンの表示を「追加」に戻す
+            AddButton.Content = "追加";
+
+            // タスク名の入力欄にフォーカスを戻す
+            TaskInputTextBox.Focus();
         }
     }
 }

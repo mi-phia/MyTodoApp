@@ -17,6 +17,28 @@
 
     <Window.Resources>
 
+        <!-- ボタン共通の角丸デザイン -->
+        <ControlTemplate
+            x:Key="RoundedButtonTemplate"
+            TargetType="{x:Type Button}">
+
+            <Border
+                CornerRadius="6"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                SnapsToDevicePixels="True">
+
+                <ContentPresenter
+                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                    Margin="{TemplateBinding Padding}"
+                    RecognizesAccessKey="True"/>
+
+            </Border>
+
+        </ControlTemplate>
+
         <!-- 入力欄のデザイン -->
         <Style x:Key="InputTextBoxStyle"
            TargetType="{x:Type TextBox}">
@@ -66,12 +88,16 @@
             <Setter Property="Height" Value="36"/>
             <Setter Property="MinWidth" Value="100"/>
             <Setter Property="Padding" Value="12,5"/>
-            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Background" Value="#FF8DC8FF"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Cursor" Value="Hand"/>
+
+            <Setter
+                Property="Template"
+                Value="{StaticResource RoundedButtonTemplate}"/>
 
             <Style.Triggers>
 
@@ -106,6 +132,10 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
 
+            <Setter
+                Property="Template"
+                Value="{StaticResource RoundedButtonTemplate}"/>
+
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background"
@@ -127,6 +157,10 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
 
+            <Setter
+                Property="Template"
+                Value="{StaticResource RoundedButtonTemplate}"/>
+
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background"
@@ -135,6 +169,40 @@
             </Style.Triggers>
 
         </Style>
+
+        <!-- 入力リセットボタンのデザイン -->
+        <Style x:Key="ResetButtonStyle"
+            TargetType="{x:Type Button}">
+
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="MinWidth" Value="112"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Background" Value="#FEE2E2"/>
+            <Setter Property="Foreground" Value="#FFD63131"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+
+            <Setter
+                Property="Template"
+                Value="{StaticResource RoundedButtonTemplate}"/>
+
+            <Style.Triggers>
+
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background"
+                    Value="#FECACA"/>
+                </Trigger>
+
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background"
+                    Value="#FCA5A5"/>
+                </Trigger>
+
+            </Style.Triggers>
+
+        </Style>     
 
     </Window.Resources>
 
@@ -221,15 +289,29 @@
 
             </Grid>
 
-            <!-- 追加ボタン -->
-            <Button
-                x:Name="AddButton"
-                Content="追加"
-                Width="100"
-                Style="{StaticResource PrimaryButtonStyle}"
-                Margin="0,10,0,0"
-                HorizontalAlignment="Left"
-                Click="AddButtun_Click"/>
+            <!-- 追加・入力リセットボタン -->
+            <StackPanel
+                Orientation="Horizontal"
+                Margin="0,10,0,0">
+
+                <!-- 追加・更新ボタン -->
+                <Button
+                    x:Name="AddButton"
+                    Content="追加"
+                    Width="100"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    HorizontalAlignment="Left"
+                    Click="AddButtun_Click"/>
+
+                <!-- 入力リセットボタン -->
+                <Button
+                    x:Name="ResetButton"
+                    Content="リセット"
+                    Style="{StaticResource ResetButtonStyle}"
+                    Margin="8,0,0,0"
+                    Click="ResetButton_Click"/>
+
+            </StackPanel>
 
         </StackPanel>
 
@@ -262,42 +344,59 @@
                     Style="{StaticResource InputTextBoxStyle}"
                     HorizontalAlignment="Left"/>
 
-                <!-- 絞り込み条件 -->
-                    <TextBlock
-                    Text="表示するタスク"
-                    Margin="0,10,0,5"/>
+                <!-- 絞り込み条件・並び替え -->
+                <Grid Margin="0,10,0,10">
 
-                <ComboBox
-                    Width="180"
-                    HorizontalAlignment="Left"
-                    SelectedIndex="{Binding FilterMode, Mode=TwoWay}">
+                    <!-- 2列に分割 -->
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="200"/>
+                    </Grid.ColumnDefinitions>
 
-                    <ComboBoxItem Content="すべて"/>
-                    <ComboBoxItem Content="未完了"/>
-                    <ComboBoxItem Content="完了済み"/>
-                    <ComboBoxItem Content="期限切れ"/>
+                    <!-- 表示するタスク -->
+                    <StackPanel Grid.Column="0">
 
-                </ComboBox>
+                        <TextBlock
+                            Text="表示するタスク"
+                            Margin="0,0,0,5"/>
 
-                <!-- 並び替え -->
-                <TextBlock
-                    Text="並び替え"
-                    Margin="0,10,0,5"/>
+                        <ComboBox
+                            Width="180"
+                            HorizontalAlignment="Left"
+                            SelectedIndex="{Binding FilterMode, Mode=TwoWay}">
 
-                <ComboBox
-                    Width="180"
-                    HorizontalAlignment="Left"
-                    SelectedIndex="{Binding SortMode, Mode=TwoWay}">
+                            <ComboBoxItem Content="すべて"/>
+                            <ComboBoxItem Content="未完了"/>
+                            <ComboBoxItem Content="完了済み"/>
+                            <ComboBoxItem Content="期限切れ"/>
 
-                    <ComboBoxItem Content="登録順"/>
-                    <ComboBoxItem Content="期限が近い順"/>
-                    <ComboBoxItem Content="優先度が高い順"/>
+                        </ComboBox>
 
-                </ComboBox>
+                    </StackPanel>
 
-            </StackPanel>
+                    <!-- 並び替え -->
+                    <StackPanel Grid.Column="1">
 
-            <!-- タスク一覧 -->
+                        <TextBlock
+                            Text="並び替え"
+                            Margin="0,0,0,5"/>
+
+                        <ComboBox
+                            Width="180"
+                            HorizontalAlignment="Left"
+                            SelectedIndex="{Binding SortMode, Mode=TwoWay}">
+
+                            <ComboBoxItem Content="登録順"/>
+                            <ComboBoxItem Content="期限が近い順"/>
+                            <ComboBoxItem Content="優先度が高い順"/>
+
+                        </ComboBox>
+
+                    </StackPanel>
+
+                </Grid>
+
+                <!-- タスク一覧 -->
             <Grid Grid.Row="1">
 
                 <ListBox      
@@ -380,7 +479,7 @@
                                     <!-- 優先度 -->
                                     <Border
                                         Grid.Column="2"
-                                        Padding="8,3"
+                                        Padding="8,1"
                                         CornerRadius="5"
                                         HorizontalAlignment="Left">
 
@@ -429,6 +528,7 @@
 
                                         <TextBlock
                                             Text="{Binding Priority}"
+                                            VerticalAlignment="Center"
                                             FontWeight="SemiBold">
 
                                             <TextBlock.Style>
@@ -546,13 +646,15 @@
 
                 </StackPanel>
 
-                <!-- タスクの操作結果 -->
-                <TextBlock
-                    x:Name="TaskStatusTextBlock"
-                    Text="タスクの状態がここに表示されます"
-                    Foreground="Gray"
-                    Margin="0,5,0,0"/>
+                    <!-- タスクの操作結果 -->
+                    <TextBlock
+                        x:Name="TaskStatusTextBlock"
+                        Text="タスクの状態がここに表示されます"
+                        Foreground="Gray"
+                        Margin="0,5,0,0"/>
 
+                </StackPanel>
+                
             </StackPanel>
 
         </Grid>
