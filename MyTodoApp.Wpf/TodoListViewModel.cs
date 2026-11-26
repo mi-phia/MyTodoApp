@@ -16,6 +16,10 @@ namespace MyTodoApp.wpf
         // 検索用の一覧
         public ListCollectionView TodosView { get; }
 
+        // 現在表示されているタスクの件数
+        public int FilteredCount =>
+            TodosView.Cast<TodoItem>().Count();
+
         // 検索文字列
         private string _searchText = "";
 
@@ -32,6 +36,8 @@ namespace MyTodoApp.wpf
 
                 // 検索結果を更新
                 TodosView.Refresh();
+
+                OnPropertyChanged(nameof(FilteredCount));
             }
         }
 
@@ -50,6 +56,20 @@ namespace MyTodoApp.wpf
                 OnPropertyChanged();
 
                 TodosView.Refresh();
+
+                System.Diagnostics.Debug.WriteLine(
+    $"Todosの件数：{Todos.Count}");
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"TodosViewの件数：{TodosView.Cast<TodoItem>().Count()}");
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"検索文字：[{SearchText}]");
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"Filterの設定：{TodosView.Filter != null}");
+
+                OnPropertyChanged(nameof(FilteredCount));
             }
         }
 
@@ -81,7 +101,13 @@ namespace MyTodoApp.wpf
                 CollectionViewSource.GetDefaultView(Todos);
 
             // 検索条件を設定
-            TodosView.Filter = FilterTodos;                 
+            TodosView.Filter = FilterTodos;
+
+            // タスク一覧の追加・削除を監視
+            Todos.CollectionChanged += (sender, e) =>
+            {
+                OnPropertyChanged(nameof(FilteredCount));
+            };
         }
 
         // 検索処理

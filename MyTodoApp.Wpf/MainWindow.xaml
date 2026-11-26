@@ -1174,6 +1174,25 @@
 
                 </StackPanel>
 
+                <!-- 現在の表示件数 -->
+                <StackPanel
+                    Orientation="Horizontal"
+                    Margin="0,5,0,5">
+
+                    <TextBlock
+                        Text="表示件数："
+                        Foreground="Gray"/>
+
+                    <TextBlock
+                        Text="{Binding FilteredCount}"
+                        FontWeight="Bold"/>
+
+                    <TextBlock
+                        Text="件"
+                        Foreground="Gray"/>
+
+                </StackPanel>
+
                 <!-- タスクの操作結果 -->
                 <TextBlock
                         x:Name="TaskStatusTextBlock"

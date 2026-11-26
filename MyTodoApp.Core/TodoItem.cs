@@ -98,7 +98,6 @@ namespace MyTodoApp
             !IsCompleted &&
             DueDate.HasValue &&
             DueDate.Value.Date < DateTime.Today;
-
     }
 
     // 優先度
