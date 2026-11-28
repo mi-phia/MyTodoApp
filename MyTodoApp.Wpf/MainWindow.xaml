@@ -7,18 +7,21 @@
     xmlns:local="clr-namespace:MyTodoApp.Wpf"
     xmlns:core="clr-namespace:MyTodoApp;assembly=MyTodoApp.Core"
     mc:Ignorable="d"
+    
     Title="My Todo App"
     FontFamily="BIZ UDゴシック"
+    Foreground="#52627F"
     Width="1000"
     Height="750"
     MinWidth="750"
-    MinHeight="680"
+    MinHeight="650"
     WindowStartupLocation="CenterScreen"
-    Closing="Window_Closing">
+    Closing="Window_Closing"
+    Background="#E3F4FF">
 
     <Window.Resources>
 
-        <!-- ボタン共通の角丸デザイン -->
+<!-- ボタン共通の角丸デザイン -->
         <ControlTemplate
             x:Key="RoundedButtonTemplate"
             TargetType="{x:Type Button}">
@@ -33,14 +36,13 @@
                 <ContentPresenter
                     HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                     VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                    Margin="{TemplateBinding Padding}"
-                    RecognizesAccessKey="True"/>
+                    Margin="{TemplateBinding Padding}"/>
 
             </Border>
 
         </ControlTemplate>
 
-        <!-- 入力欄の角丸デザイン -->
+<!-- 入力欄の角丸デザイン -->
         <Style x:Key="InputTextBoxStyle"
             TargetType="{x:Type TextBox}">
 
@@ -51,8 +53,7 @@
             <Setter Property="Background" Value="#FFFFFF"/>
             <Setter Property="Foreground" Value="#0F172A"/>
             <Setter Property="FontSize" Value="15"/>
-            <Setter Property="VerticalContentAlignment"
-                Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
 
             <!-- 入力欄の形状 -->
             <Setter Property="Template">
@@ -69,6 +70,7 @@
                             CornerRadius="6"
                             Padding="{TemplateBinding Padding}">
 
+                            <!-- 入力が長すぎてもスクロールバーは非表示 -->
                             <ScrollViewer
                                 x:Name="PART_ContentHost"
                                 Focusable="False"
@@ -100,16 +102,6 @@
 
                             </Trigger>
 
-                            <!-- 無効状態 -->
-                            <Trigger Property="IsEnabled" Value="False">
-
-                                <Setter
-                                    TargetName="TextBoxBorder"
-                                    Property="Opacity"
-                                    Value="0.5"/>
-
-                            </Trigger>
-
                         </ControlTemplate.Triggers>
 
                     </ControlTemplate>
@@ -120,7 +112,7 @@
 
         </Style>
         
-        <!-- ComboBoxの選択肢のデザイン -->
+<!-- ComboBoxの選択肢のデザイン -->
         <Style x:Key="InputComboBoxItemStyle"
             TargetType="{x:Type ComboBoxItem}">
 
@@ -129,6 +121,7 @@
             <Setter Property="Foreground" Value="#334155"/>
 
             <Setter Property="Template">
+                
                 <Setter.Value>
 
                     <ControlTemplate TargetType="{x:Type ComboBoxItem}">
@@ -181,11 +174,12 @@
                     </ControlTemplate>
 
                 </Setter.Value>
+                
             </Setter>
 
         </Style>
 
-        <!-- ComboBox本体のデザイン -->
+<!-- ComboBox本体のデザイン -->
         <Style x:Key="InputComboBoxStyle"
             TargetType="{x:Type ComboBox}">
 
@@ -197,8 +191,7 @@
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Padding" Value="10,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="ItemContainerStyle"
-            Value="{StaticResource InputComboBoxItemStyle}"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource InputComboBoxItemStyle}"/>
 
             <Setter Property="Template">
 
@@ -225,7 +218,8 @@
                                 BorderThickness="0"
                                 IsChecked="{Binding IsDropDownOpen,
                                     Mode=TwoWay,
-                                RelativeSource={RelativeSource TemplatedParent}}">
+                                    RelativeSource={RelativeSource TemplatedParent}}">
+
 
                                 <ToggleButton.Template>
 
@@ -319,16 +313,6 @@
 
                             </Trigger>
 
-                            <!-- 無効状態 -->
-                            <Trigger Property="IsEnabled" Value="False">
-
-                                <Setter
-                                    TargetName="ComboBorder"
-                                    Property="Opacity"
-                                    Value="0.5"/>
-
-                            </Trigger>
-
                         </ControlTemplate.Triggers>
 
                     </ControlTemplate>
@@ -339,7 +323,7 @@
 
         </Style>
 
-        <!-- DatePickerの角丸デザイン -->
+<!-- DatePickerの角丸デザイン -->
         <Style x:Key="InputDatePickerStyle"
             TargetType="{x:Type DatePicker}">
 
@@ -357,7 +341,7 @@
 
                     <ControlTemplate TargetType="{x:Type DatePicker}">
 
-                        <Grid x:Name="PART_Root">
+                        <Grid>
 
                             <!-- 外枠 -->
                             <Border
@@ -366,7 +350,6 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="6"/>
-
                             <Grid>
 
                                 <Grid.ColumnDefinitions>
@@ -514,20 +497,20 @@
 
         </Style>
 
-        <!-- 追加ボタンのデザイン -->
+<!-- 追加ボタンのデザイン -->
         <Style x:Key="PrimaryButtonStyle"
-           TargetType="{x:Type Button}">
+            TargetType="{x:Type Button}">
 
             <Setter Property="Height" Value="36"/>
             <Setter Property="MinWidth" Value="100"/>
             <Setter Property="Padding" Value="12,5"/>
-            <Setter Property="Background" Value="#FF8DC8FF"/>
+            <Setter Property="Background" Value="#87CEFA"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Cursor" Value="Hand"/>
-
+            
             <Setter
                 Property="Template"
                 Value="{StaticResource RoundedButtonTemplate}"/>
@@ -536,7 +519,7 @@
 
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background"
-                        Value="#79b9ff"/>
+                        Value="#5BB8ED"/>
                 </Trigger>
 
                 <Trigger Property="IsPressed" Value="True">
@@ -552,8 +535,41 @@
             </Style.Triggers>
 
         </Style>
+        <!-- 入力リセットボタンのデザイン -->
+        <Style x:Key="ResetButtonStyle"
+    TargetType="{x:Type Button}">
 
-        <!-- 編集ボタンのデザイン -->
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="MinWidth" Value="112"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Background" Value="#FFD54F"/>
+            <Setter Property="Foreground" Value="#52627F"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+
+            <Setter
+        Property="Template"
+        Value="{StaticResource RoundedButtonTemplate}"/>
+
+            <Style.Triggers>
+
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background"
+            Value="#FFF9E6"/>
+                </Trigger>
+
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background"
+            Value="#FCA5A5"/>
+                </Trigger>
+
+            </Style.Triggers>
+
+        </Style>
+        
+<!-- 編集ボタンのデザイン -->
         <Style x:Key="SecondaryButtonStyle"
            TargetType="{x:Type Button}">
 
@@ -570,23 +586,25 @@
                 Value="{StaticResource RoundedButtonTemplate}"/>
 
             <Style.Triggers>
+                
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background"
                         Value="#CBD5E1"/>
                 </Trigger>
+           
             </Style.Triggers>
 
         </Style>
 
-        <!-- 削除ボタンのデザイン -->
+<!-- 削除ボタンのデザイン -->
         <Style x:Key="DangerButtonStyle"
            TargetType="{x:Type Button}">
 
             <Setter Property="Height" Value="30"/>
             <Setter Property="MinWidth" Value="60"/>
             <Setter Property="Padding" Value="8,3"/>
-            <Setter Property="Background" Value="#FEE2E2"/>
-            <Setter Property="Foreground" Value="#B91C1C"/>
+            <Setter Property="Background" Value="#FFD54F"/>
+            <Setter Property="Foreground" Value="#52627F"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
 
@@ -595,58 +613,30 @@
                 Value="{StaticResource RoundedButtonTemplate}"/>
 
             <Style.Triggers>
+                
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background"
-                        Value="#FECACA"/>
+                        Value="#FFF9E6"/>
                 </Trigger>
+            
             </Style.Triggers>
 
         </Style>
 
-        <!-- 入力リセットボタンのデザイン -->
-        <Style x:Key="ResetButtonStyle"
-            TargetType="{x:Type Button}">
-
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="MinWidth" Value="112"/>
-            <Setter Property="Padding" Value="12,5"/>
-            <Setter Property="Background" Value="#FEE2E2"/>
-            <Setter Property="Foreground" Value="#FFD63131"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Cursor" Value="Hand"/>
-
-            <Setter
-                Property="Template"
-                Value="{StaticResource RoundedButtonTemplate}"/>
-
-            <Style.Triggers>
-
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background"
-                    Value="#FECACA"/>
-                </Trigger>
-
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background"
-                    Value="#FCA5A5"/>
-                </Trigger>
-
-            </Style.Triggers>
-
-        </Style>     
-
     </Window.Resources>
+            
+        
 
-    <Grid Margin="20">
+<!-- 以下、実際の画面情報 -->
+    <Grid 
+        Margin="20">
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- タスク追加フォーム -->
+<!-- タスク追加フォーム -->
         <StackPanel
             Grid.Row="0"
             Orientation="Vertical"
@@ -672,7 +662,7 @@
                 HorizontalAlignment="Left"
                 MaxLength="100"/>
 
-            <!-- 期限と優先度 -->
+<!-- 期限と優先度 -->
             <Grid Margin="0,10,0,0">
 
                 <!-- 横方向への分割 -->
@@ -722,7 +712,7 @@
 
             </Grid>
 
-            <!-- 追加・入力リセットボタン -->
+<!-- 追加・入力リセットボタン -->
             <StackPanel
                 Orientation="Horizontal"
                 Margin="0,10,0,0">
@@ -756,7 +746,7 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- タスク一覧のタイトル と検索欄 -->
+<!-- タスク一覧のタイトル と検索欄 -->
             <StackPanel
                 Grid.Row="0"
                 Margin="0,0,0,10">
@@ -830,8 +820,10 @@
                     </StackPanel>
 
                 </Grid>
+                
             </StackPanel>
-                <!-- タスク一覧 -->
+            
+<!-- タスク一覧 -->
             <Grid Grid.Row="1">
 
                 <!-- タスク一覧の外枠 -->
@@ -853,68 +845,71 @@
                         ScrollViewer.VerticalScrollBarVisibility="Auto"
                         ScrollViewer.CanContentScroll="False">
 
-                    <!-- スクロール領域の設定 -->
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel
-                                Margin="0,0,0,180"/>
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
+                    <!-- スクロール領域の設定(4つめの数字を増やすと余白でスクロールが余計に可能になる) -->
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel
+                                    Margin="0,0,0,0"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+    
+                        <ListBox.ItemTemplate>
 
-                    <ListBox.ItemTemplate>
+                            <DataTemplate>
 
-                        <DataTemplate>
+                               <!-- タスク間のボーダー -->
+                                <Border
+                                    BorderThickness="0,0,0,1"
+                                    Padding="8,6"
+                                    MinHeight="44"
+                                    Margin="0,2"
+                                    CornerRadius="6">
 
-                            <Border
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6"
-                                MinHeight="44"
-                                Margin="0,2"
-                                CornerRadius="6">
+                                    <!-- マウスオーバー時のデザイン -->
+                                    <Border.Style>
+                                        <Style TargetType="{x:Type Border}">
 
-                                <!-- マウスオーバー時のデザイン -->
-                                <Border.Style>
-                                    <Style TargetType="{x:Type Border}">
+                                            <!-- 通常時 -->
+                                            <Setter
+                                                Property="Background"
+                                                Value="Transparent"/>
 
-                                        <!-- 通常時 -->
-                                        <Setter
-                                            Property="Background"
-                                            Value="Transparent"/>
+                                            <Setter
+                                                Property="BorderBrush"
+                                                Value="#E2E8F0"/>
 
-                                        <Setter
-                                            Property="BorderBrush"
-                                            Value="#E2E8F0"/>
+                                            <Style.Triggers>
 
-                                        <Style.Triggers>
+                                                <!-- マウスを合わせたとき -->
+                                                <DataTrigger
+                                                    Binding="{Binding IsMouseOver,
+                                                    RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}"
+                                                    Value="True">
 
-                                            <!-- マウスを合わせたとき -->
-                                            <DataTrigger
-                                                Binding="{Binding IsMouseOver,
-                                                RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}"
-                                                Value="True">
+                                                    <!-- 背景色 -->
+                                                    <Setter
+                                                        Property="Background"
+                                                        Value="#EFF6FF"/>
 
-                                                <!-- 背景色 -->
-                                                <Setter
-                                                    Property="Background"
-                                                    Value="#EFF6FF"/>
+                                                    <!-- 枠線 -->
+                                                    <Setter
+                                                        Property="BorderBrush"
+                                                        Value="#BFDBFE"/>
 
-                                                <!-- 枠線 -->
-                                                <Setter
-                                                    Property="BorderBrush"
-                                                    Value="#BFDBFE"/>
+                                                </DataTrigger>
 
-                                            </DataTrigger>
+                                            </Style.Triggers>
 
-                                        </Style.Triggers>
+                                        </Style>
+                                        
+                                    </Border.Style>
 
-                                    </Style>
-                                </Border.Style>
-
-                                <Grid VerticalAlignment="Center">
+<!-- 以下グリッドをボーダーの中心に置く -->
+                                    <Grid VerticalAlignment="Center">
 
                                     <!-- 5列に分割 -->
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="170"/>
                                         <ColumnDefinition Width="140"/>
                                         <ColumnDefinition Width="70"/>
@@ -933,6 +928,7 @@
 
                                             <!-- 完了状態による文字の変更 -->
                                             <TextBlock.Style>
+                                                
                                                 <Style TargetType="TextBlock">
 
                                                     <Setter
@@ -956,10 +952,13 @@
                                                         </DataTrigger>
 
                                                     </Style.Triggers>
+                                                    
                                                 </Style>
+ 
                                             </TextBlock.Style>
-
+                              
                                         </TextBlock>
+                                   
                                     </CheckBox>
 
                                     <!-- 期限 -->
@@ -970,6 +969,7 @@
 
                                         <!-- 期限切れによる文字色の変更 -->
                                         <TextBlock.Style>
+                                            
                                             <Style TargetType="TextBlock">
 
                                                 <!-- 通常時の文字色 -->
@@ -997,6 +997,7 @@
                                                 </Style.Triggers>
 
                                             </Style>
+                                            
                                         </TextBlock.Style>
 
                                     </TextBlock>
@@ -1009,6 +1010,7 @@
                                         HorizontalAlignment="Left">
 
                                         <Border.Style>
+                                            
                                             <Style TargetType="Border">
 
                                                 <Setter
@@ -1048,7 +1050,9 @@
                                                     </DataTrigger>
 
                                                 </Style.Triggers>
+                                                
                                             </Style>
+                                            
                                         </Border.Style>
 
                                         <TextBlock
@@ -1086,10 +1090,13 @@
                                                         </DataTrigger>
 
                                                     </Style.Triggers>
+                                                    
                                                 </Style>
+                                                
                                             </TextBlock.Style>
 
                                         </TextBlock>
+                                        
                                     </Border>
 
                                     <!-- 編集ボタン -->
@@ -1108,13 +1115,13 @@
                                         Click="DeleteButton_Click"
                                         Margin="2,0"/>                                   
                                 
-                                </Grid>
+                                    </Grid>
                             
-                            </Border>
+                                </Border>
                      
-                        </DataTemplate>
+                            </DataTemplate>
                     
-                    </ListBox.ItemTemplate>
+                        </ListBox.ItemTemplate>
 
                     </ListBox>
                     
@@ -1133,11 +1140,13 @@
                     <TextBlock.Style>
 
                         <Style TargetType="TextBlock">
+                            
                             <Setter
                                 Property="Visibility"
                                 Value="Collapsed"/>
 
                             <Style.Triggers>
+                                
                                 <DataTrigger
                                     Binding="{Binding TodosView.IsEmpty}"
                                     Value="True">
@@ -1157,7 +1166,8 @@
                 </TextBlock>
 
             </Grid>
-            <!-- 操作結果の表示 -->
+            
+<!-- 操作結果の表示 -->
             <StackPanel
                 Grid.Row="2"
                 Margin="0,10,0,0">
@@ -1198,7 +1208,7 @@
                         x:Name="TaskStatusTextBlock"
                         Text="タスクの状態がここに表示されます"
                         Foreground="Gray"
-                        Margin="0,5,0,0"/>
+                        Margin="0,3,0,0"/>
 
                 <!-- データ管理 -->
                 <TextBlock

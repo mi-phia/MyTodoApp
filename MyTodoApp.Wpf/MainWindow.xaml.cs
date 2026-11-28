@@ -1,24 +1,13 @@
 ﻿using MyTodoApp;
-using MyTodoApp.wpf;
 using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Microsoft.Win32;
 
 namespace MyTodoApp.Wpf
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         // DB操作用
@@ -26,14 +15,6 @@ namespace MyTodoApp.Wpf
 
         // タスク管理用
         private readonly TodoManager _manager = new();
-
-        // ウィンドウ設定の保存先
-        private readonly string _windowSettingsPath =
-            System.IO.Path.Combine(
-                Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData),
-                "MyTodoApp",
-                "window-settings.json");
 
         // ViewModel用
         private readonly TodoListViewModel _viewModel;
@@ -44,6 +25,15 @@ namespace MyTodoApp.Wpf
         // 削除対象のタスク
         private TodoItem? _deletingTodo;
 
+        // ウィンドウ設定の保存先
+        private readonly string _windowSettingsPath =
+            System.IO.Path.Combine(
+                Environment.GetFolderPath(
+                    Environment.SpecialFolder.LocalApplicationData),
+                "MyTodoApp",
+                "window-settings.json");
+
+        // コンストラクター
         public MainWindow()
         {
             // 画面の部品に関する初期化処理
@@ -112,7 +102,8 @@ namespace MyTodoApp.Wpf
                 return;
             }
 
-            // 選択番号をTodoPriorityに変換(1ずつズレているのに注意！)
+            // 選択番号をTodoPriorityに変換
+                // (1ずつズレているのに注意！)
             TodoPriority priority = PriorityComboBox.SelectedIndex switch
             {
                 0 => TodoPriority.Low,
@@ -151,7 +142,7 @@ namespace MyTodoApp.Wpf
                     priority);
             }
 
-            // 入力フォームをリセット（優先度は「中」に戻す）
+            // 入力フォームをリセット
             ResetInputForm();
         }
 
@@ -172,7 +163,8 @@ namespace MyTodoApp.Wpf
                 return;
             }
 
-            // 現在のチェック状況を取得(Checked/Unchecked == true/false)
+            // 現在のチェック状況を取得
+                // (Checked/Unchecked == true/false)
             bool isCompleted = checkBox.IsChecked == true;
 
             // DBの完了状態を更新
@@ -204,7 +196,7 @@ namespace MyTodoApp.Wpf
                     $"「{todo.Title}」を未完了にしました。";
             }
 
-            // 完了所帯の変更を絞り込みに反映
+            // 完了状態の変更を絞り込みに反映
             _viewModel.TodosView.Refresh();
         }
 
@@ -220,7 +212,8 @@ namespace MyTodoApp.Wpf
                 return;
             }
 
-            // 編集対象を保持(他のメソッドで使えるように)
+            // 編集対象を保持
+                // (他のメソッドで使えるように)
             _editingTodo = todo;
 
             // 情報をフォームに設定
@@ -264,6 +257,7 @@ namespace MyTodoApp.Wpf
             }
 
             // 削除対象を保持
+                // (ダイアログ表示後も扱えるように)
             _deletingTodo = todo;
 
             // 削除確認ダイアログを表示
@@ -304,10 +298,10 @@ namespace MyTodoApp.Wpf
             // 「いいえ」が選択された場合
             else
             {
-                _deletingTodo = null;
-
                 TaskStatusTextBlock.Text =
                     "削除をキャンセルしました。";
+
+                _deletingTodo = null;
             }            
         }
 
@@ -346,6 +340,7 @@ namespace MyTodoApp.Wpf
             TaskInputTextBox.Focus();
         }
 
+// バックアップ関連
         // バックアップ作成ボタンがクリックされたときの処理
         private void BackupButton_Click(
             object sender,
@@ -410,6 +405,7 @@ namespace MyTodoApp.Wpf
                     ? backupDirectory
                     : databaseDirectory,
 
+                // ファイル選択時の設定
                 CheckFileExists = true,
                 Multiselect = false
             };
@@ -428,7 +424,6 @@ namespace MyTodoApp.Wpf
                 "復元を実行してもよろしいですか？",
 
                 "バックアップ復元の確認",
-
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning,
                 MessageBoxResult.No);
@@ -447,12 +442,12 @@ namespace MyTodoApp.Wpf
                 // タスク一覧を再読み込み
                 _manager.LoadTodosFromDatabase(_repository);
 
+                // 一覧を更新
+                _viewModel.TodosView.Refresh();
+
                 // 検索・絞り込みを初期状態に戻す
                 _viewModel.SearchText = "";
                 _viewModel.FilterMode = 0;
-
-                // 一覧を更新
-                _viewModel.TodosView.Refresh();
 
                 // 入力フォームをリセット
                 ResetInputForm();
@@ -484,6 +479,7 @@ namespace MyTodoApp.Wpf
             }
         }
 
+// ウィンドウ情報関連
         // ウィンドウを閉じるときの処理
         private void Window_Closing(
             object? sender,
@@ -614,7 +610,6 @@ namespace MyTodoApp.Wpf
                     Width = bounds.Width > 0 ? bounds.Width : Width,
                     Height = bounds.Height > 0 ? bounds.Height : Height,
 
-                    // ウィンドウの位置を保存
                     Left = bounds.Left,
                     Top = bounds.Top,
 
@@ -642,10 +637,6 @@ namespace MyTodoApp.Wpf
         // ウィンドウ設定を保存するためのクラス
         private sealed class WindowSettings
         {
-            public WindowSettings()
-            {
-            }
-
             public double Width { get; set; }
 
             public double Height { get; set; }

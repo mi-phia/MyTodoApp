@@ -1,26 +1,26 @@
 ﻿using System.Collections.ObjectModel;
-using MyTodoApp;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
 using System.Collections;
 using System.Linq;
+using MyTodoApp;
 
-namespace MyTodoApp.wpf
+namespace MyTodoApp.Wpf
 {
-    public class TodoListViewModel
+    public class TodoListViewModel : INotifyPropertyChanged
     {
-        // 画面に表示するタスク一覧
+        // 表示専用のタスク一覧
         public ObservableCollection<TodoItem> Todos { get; }
 
         // 検索用の一覧
         public ListCollectionView TodosView { get; }
 
-        // 現在表示されているタスクの件数
+        // 検索・絞り込み後のタスク件数
         public int FilteredCount =>
             TodosView.Cast<TodoItem>().Count();
 
-        // 検索文字列
+        // 検索用の文字列
         private string _searchText = "";
 
         public string SearchText 
@@ -32,11 +32,13 @@ namespace MyTodoApp.wpf
 
                 _searchText = value;
 
+                // 検索欄の変更を通知
                 OnPropertyChanged();
 
-                // 検索結果を更新
+                // 検索結果の画面を更新
                 TodosView.Refresh();
-
+                
+                // 検索件数の変更を通知
                 OnPropertyChanged(nameof(FilteredCount));
             }
         }
@@ -57,18 +59,6 @@ namespace MyTodoApp.wpf
 
                 TodosView.Refresh();
 
-                System.Diagnostics.Debug.WriteLine(
-    $"Todosの件数：{Todos.Count}");
-
-                System.Diagnostics.Debug.WriteLine(
-                    $"TodosViewの件数：{TodosView.Cast<TodoItem>().Count()}");
-
-                System.Diagnostics.Debug.WriteLine(
-                    $"検索文字：[{SearchText}]");
-
-                System.Diagnostics.Debug.WriteLine(
-                    $"Filterの設定：{TodosView.Filter != null}");
-
                 OnPropertyChanged(nameof(FilteredCount));
             }
         }
@@ -87,6 +77,7 @@ namespace MyTodoApp.wpf
 
                 OnPropertyChanged();
 
+                // 並び替えメソッドの呼び出し
                 ApplySort();
             }
         }
@@ -94,22 +85,25 @@ namespace MyTodoApp.wpf
         // コンストラクター
         public TodoListViewModel(TodoManager manager)
         {
+            // 表示用のタスク一覧を取得
             Todos = manager.Todos;
 
-            // 一覧を検索用に設定
+            // 表示・検索・並び替えに対応できる型に変更
             TodosView = (ListCollectionView)
                 CollectionViewSource.GetDefaultView(Todos);
 
-            // 検索条件を設定
+            // 検索メソッドを設定
+                // ()がないメソッドは必要回数呼び出しが可能
             TodosView.Filter = FilterTodos;
 
-            // タスク一覧の追加・削除を監視
+            // 検索件数の変更の監視を追加
             Todos.CollectionChanged += (sender, e) =>
             {
                 OnPropertyChanged(nameof(FilteredCount));
             };
         }
 
+// 以下、処理メソッド
         // 検索処理
         private bool FilterTodos(object item)
         {
@@ -118,9 +112,11 @@ namespace MyTodoApp.wpf
                 return false;
             }
 
-            // キーワード検索
+            // 検索欄が空なら全件表示
+                // Trueなら表示、Falseなら非表示
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
+                // 検索文字が含まれるならTrue(表示)
                 bool matcheskeyword = todo.Title.Contains(
                     SearchText.Trim(),
                     StringComparison.CurrentCultureIgnoreCase);
@@ -132,6 +128,7 @@ namespace MyTodoApp.wpf
             }
 
             // 完了状態による絞り込み
+                // 1:未完了 l 2:完了 l 3:期限切れ
             return FilterMode switch
             {
                 0 => true,
@@ -168,20 +165,10 @@ namespace MyTodoApp.wpf
             TodosView.Refresh();
         }
 
-        // プロパティ変更通知
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void OnPropertyChanged(
-            [CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(
-                this,
-                new PropertyChangedEventArgs(propertyName));
-        }
-
         // 期限による並び替え
         private sealed class DueDateComparer : IComparer
         {
+            // 正の数なら前者が、負の数なら後者が後に並ぶ
             public int Compare(object? x, object? y)
             {
                 // TodoItemを取得
@@ -226,21 +213,29 @@ namespace MyTodoApp.wpf
         {
             public int Compare(object? x, object? y)
             {
-                // TodoItemを取得
                 if (x is not TodoItem a ||
                     y is not TodoItem b)
                 {
                     return 0;
                 }
 
-                // 優先度が高い順に比較
                 int result = b.Priority.CompareTo(a.Priority);
 
-                // 同じ優先度ならID順
                 return result != 0
                     ? result
                     : a.Id.CompareTo(b.Id);
             }
+        }
+
+        // プロパティ変更通知
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void OnPropertyChanged(
+            [CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(
+                this,
+                new PropertyChangedEventArgs(propertyName));
         }
     }
 }
